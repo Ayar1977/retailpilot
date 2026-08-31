@@ -1,0 +1,205 @@
+package com.salespro
+
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.activity.viewModels
+import dagger.hilt.android.AndroidEntryPoint
+import com.salespro.ui.AddProductDialog
+import com.salespro.ui.AnalyticsScreen
+import com.salespro.ui.CheckoutDialog
+import com.salespro.ui.InventoryScreen
+import com.salespro.ui.SalesScreen
+import com.salespro.ui.UpdatePriceDialog
+import com.salespro.viewmodel.SalesViewModel
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    private val viewModel: SalesViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            com.salespro.ui.theme.SalesProTheme {
+                RetailPilotApp(viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun RetailPilotApp(viewModel: SalesViewModel) {
+    val stateHolder = rememberSaveableStateHolder()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // Consume UiEvent one-time messages
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is SalesViewModel.UiEvent.ShowError -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                is SalesViewModel.UiEvent.ShowSuccess -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+
+    androidx.compose.material3.Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            com.salespro.ui.AdaptiveNavigation { destination ->
+                stateHolder.SaveableStateProvider(destination) {
+                    when (destination) {
+                        "Sell" -> {
+                            val products by viewModel.products.collectAsState(initial = emptyList())
+                            val searchText by viewModel.searchText.collectAsState()
+                            val selectedProduct by viewModel.selectedProduct.collectAsState()
+                            val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
+                            val showUpdatePriceDialog by viewModel.showUpdatePriceDialog.collectAsState()
+                            val productToUpdate by viewModel.productToUpdate.collectAsState()
+                            val newCostPrice by viewModel.newCostPrice.collectAsState()
+                            val prefilledEan by viewModel.prefilledEan.collectAsState()
+
+                            val showPriceInputDialog by viewModel.showPriceInputDialog.collectAsState()
+                            val inputPrice by viewModel.inputPrice.collectAsState()
+                            val inputQuantity by viewModel.inputQuantity.collectAsState()
+                            val customerPhone by viewModel.customerPhone.collectAsState()
+                            val sendSmsToggle by viewModel.sendSmsToggle.collectAsState()
+                            val generateBillToggle by viewModel.generateBillToggle.collectAsState()
+                            val activeCartLines by viewModel.activeCartLines.collectAsState()
+                            val completionInProgress by viewModel.completionInProgress.collectAsState()
+
+                            SalesScreen(
+                                products = products.filter { it.name.contains(searchText, ignoreCase = true) },
+                                cartLines = activeCartLines,
+                                onProductSelected = { p -> viewModel.addToCart(p.id, 1L) },
+                                onUpdateQuantity = viewModel::updateCartQuantity,
+                                onCheckout = { viewModel.completeCartCheckout(context) },
+                                isCheckoutEnabled = !completionInProgress
+                            )
+
+                            if (showAddProductDialog) {
+                                AddProductDialog(
+                                    prefilledEan = prefilledEan,
+                                    onDismiss = viewModel::onAddProductDialogDismiss,
+                                    onConfirm = viewModel::addProduct
+                                )
+                            }
+
+                            if (showUpdatePriceDialog && productToUpdate != null) {
+                                UpdatePriceDialog(
+                                    product = productToUpdate!!,
+                                    newCostPrice = newCostPrice,
+                                    onPriceChange = viewModel::onNewCostPriceChange,
+                                    onDismiss = viewModel::onUpdatePriceDialogDismiss,
+                                    onConfirm = viewModel::updateProductPrice
+                                )
+                            }
+
+                            if (showPriceInputDialog && selectedProduct != null) {
+                                CheckoutDialog(
+                                    product = selectedProduct!!,
+                                    inputPrice = inputPrice,
+                                    inputQuantity = inputQuantity,
+                                    customerPhone = customerPhone,
+                                    sendSmsToggle = sendSmsToggle,
+                                    generateBillToggle = generateBillToggle,
+                                    onPriceChange = viewModel::onInputPriceChange,
+                                    onQuantityChange = viewModel::onInputQuantityChange,
+                                    onPhoneChange = viewModel::onCustomerPhoneChange,
+                                    onSendSmsToggleChange = viewModel::onSendSmsToggleChange,
+                                    onGenerateBillToggleChange = viewModel::onGenerateBillToggleChange,
+                                    onDismiss = viewModel::onPriceInputDialogDismiss,
+                                    onConfirm = { viewModel.confirmSale(context) }
+                                )
+                            }
+                        }
+                        "Inventory" -> {
+                            val products by viewModel.products.collectAsState(initial = emptyList())
+                            val activeAlerts by viewModel.activeStockAlerts.collectAsState()
+                            val pendingReminders by viewModel.pendingReminders.collectAsState()
+                            InventoryScreen(
+                                products = products,
+                                activeAlerts = activeAlerts,
+                                pendingReminders = pendingReminders,
+                                onDismissReminder = viewModel::markReminderCompleted,
+                                onReceiveStock = { productId, qty, costMinor, sellingMinor, batchNumber ->
+                                    viewModel.receiveInventoryBatch(
+                                        productId = productId,
+                                        quantity = qty,
+                                        unitCostMinor = costMinor,
+                                        sellingPriceMinor = sellingMinor,
+                                        batchNumber = batchNumber
+                                    )
+                                }
+                            )
+                        }
+                        "Purchases" -> {
+                            val purchases by viewModel.purchases.collectAsState(initial = emptyList())
+                            val products by viewModel.products.collectAsState(initial = emptyList())
+                            com.salespro.ui.PurchasesScreen(
+                                purchases = purchases,
+                                products = products,
+                                onReceivePurchase = viewModel::receivePurchase
+                            )
+                        }
+                        "Reports" -> {
+                            val sales by viewModel.sales.collectAsState(initial = emptyList())
+                            AnalyticsScreen(sales = sales)
+                        }
+                        "More" -> {
+                            val bpViewModel: com.salespro.viewmodel.BusinessProfileViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                            val profile by bpViewModel.businessProfile.collectAsState()
+                            val isSaving by bpViewModel.isSaving.collectAsState()
+
+                            com.salespro.ui.BusinessProfileScreen(
+                                profile = profile,
+                                isSaving = isSaving,
+                                onSaveProfile = bpViewModel::saveProfile,
+                                onLoadReferenceProducts = {
+                                    bpViewModel.loadReferenceProducts() // Inserts Coke
+                                    viewModel.onSetupRiceRequested() // Triggers Rice form
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlaceholderScreen(title: String, message: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = title, style = MaterialTheme.typography.headlineMedium)
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(8.dp))
+            Text(text = message, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
