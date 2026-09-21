@@ -1,0 +1,92 @@
+name: Publish demo APK
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build, test, and lint release source
+        run: ./gradlew --no-daemon clean assembleDebug testDebugUnitTest lintDebug --stacktrace
+
+      - name: Verify tag matches APK version
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+
+          test -f "$APK"
+          test -x "$AAPT"
+
+          VERSION_NAME="$("$AAPT" dump badging "$APK" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -n 1)"
+          EXPECTED="${GITHUB_REF_NAME#v}"
+
+          echo "APK versionName: $VERSION_NAME"
+          echo "Release tag:     $GITHUB_REF_NAME"
+
+          if [ -z "$VERSION_NAME" ]; then
+            echo "Could not read versionName from APK."
+            exit 1
+          fi
+
+          if [ "$VERSION_NAME" != "$EXPECTED" ]; then
+            echo "Release tag does not match APK versionName."
+            echo "Expected v$VERSION_NAME but got $GITHUB_REF_NAME."
+            exit 1
+          fi
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OUT="RetailPilot-${GITHUB_REF_NAME}-demo.apk"
+
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > "${OUT}.sha256"
+
+          echo "APK:"
+          ls -lh "$OUT"
+          echo "SHA-256:"
+          cat "${OUT}.sha256"
+
+      - name: Attach APK and checksum to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release upload \
+            "${GITHUB_REF_NAME}" \
+            "RetailPilot-${GITHUB_REF_NAME}-demo.apk" \
+            "RetailPilot-${GITHUB_REF_NAME}-demo.apk.sha256" \
+            --clobber

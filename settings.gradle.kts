@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Sales Pro"
+rootProject.name = "RetailPilot"
 
 include(":app")
 include(":core")
