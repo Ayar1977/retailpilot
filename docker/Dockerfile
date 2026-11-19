@@ -22,7 +22,7 @@ ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-to
 
 # Same SDK packages as the GitHub CI workflow
 RUN yes | sdkmanager --licenses > /dev/null \
- && sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+ && sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "build-tools;35.0.0"
 
 WORKDIR /workspace
 # Scripts are read from the mounted repository, so editing them needs no image rebuild
