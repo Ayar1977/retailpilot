@@ -63,6 +63,9 @@ class SalesRepository(
         return BarcodeMatch(product, pack.unitsPerPack, pack)
     }
 
+    suspend fun updateProductDetails(id: Long, name: String, barcode: String) =
+        dao.updateProductDetails(id, name, barcode, System.currentTimeMillis())
+
     fun getAllPackagings() = dao.getAllPackagings()
 
     suspend fun insertPackaging(packaging: ProductPackaging): Long = dao.insertPackaging(packaging)

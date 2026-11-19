@@ -1,5 +1,7 @@
 package com.salespro.ui
 
+import androidx.compose.material.icons.filled.Edit
+
 import com.salespro.data.ProductPackaging
 import androidx.compose.material.icons.filled.Inventory2
 
@@ -42,6 +44,7 @@ fun InventoryScreen(
     onAddPackaging: (productId: Long, name: String, barcode: String, units: Long) -> Unit = { _, _, _, _ -> },
     onDeletePackaging: (Long) -> Unit = {},
     onScanInto: (onCode: (String) -> Unit) -> Unit = {},
+    onUpdateProduct: (productId: Long, name: String, barcode: String) -> Unit = { _, _, _ -> },
     onReceiveStock: (productId: Long, quantity: Long, costMinor: Long, sellingMinor: Long, batchNumber: String?) -> Unit
 ) {
     var showReceiveDialog by remember { mutableStateOf(false) }
@@ -49,6 +52,7 @@ fun InventoryScreen(
     var searchText by remember { mutableStateOf("") }
     var showRemindersSheet by remember { mutableStateOf(false) }
     var packsProduct by remember { mutableStateOf<Product?>(null) }
+    var editProduct by remember { mutableStateOf<Product?>(null) }
     val packsByProduct = packagings.groupBy { it.productId }
 
     val filtered = products.filter { it.name.contains(searchText, ignoreCase = true) }
@@ -120,6 +124,7 @@ fun InventoryScreen(
                     product = product,
                     packCount = packsByProduct[product.id]?.size ?: 0,
                     onManagePacks = { packsProduct = product },
+                    onEdit = { editProduct = product },
                     onReceiveStock = {
                         selectedProduct = product
                         showReceiveDialog = true
@@ -151,6 +156,18 @@ fun InventoryScreen(
                 showReceiveDialog = false
                 selectedProduct = null
             }
+        )
+    }
+
+    editProduct?.let { product ->
+        EditProductDialog(
+            product = product,
+            onSave = { name, barcode ->
+                onUpdateProduct(product.id, name, barcode)
+                editProduct = null
+            },
+            onScanBarcode = onScanInto,
+            onDismiss = { editProduct = null }
         )
     }
 
@@ -220,6 +237,7 @@ private fun InventoryProductCard(
     product: Product,
     packCount: Int,
     onManagePacks: () -> Unit,
+    onEdit: () -> Unit,
     onReceiveStock: () -> Unit
 ) {
     Card(
@@ -269,6 +287,10 @@ private fun InventoryProductCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(R.string.packs_count, packCount), style = MaterialTheme.typography.labelMedium)
                 }
+            }
+
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_product))
             }
 
             FilledTonalButton(

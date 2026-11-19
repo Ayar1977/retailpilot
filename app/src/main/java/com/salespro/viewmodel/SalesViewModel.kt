@@ -337,6 +337,27 @@ class SalesViewModel @Inject constructor(
         }
     }
 
+    fun updateProductDetails(productId: Long, name: String, barcode: String) {
+        val code = barcode.trim()
+        viewModelScope.launch {
+            try {
+                if (code.isNotEmpty()) {
+                    val match = repository.resolveBarcode(code)
+                    val isSameProduct = match != null && match.packaging == null && match.product.id == productId
+                    if (match != null && !isSameProduct) {
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(match))))
+                        return@launch
+                    }
+                }
+                repository.updateProductDetails(productId, name.trim(), code)
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_updated)))
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_unexpected_error)))
+            }
+        }
+    }
+
     fun deletePackaging(id: Long) {
         viewModelScope.launch {
             try {

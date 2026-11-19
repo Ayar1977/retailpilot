@@ -61,6 +61,10 @@ interface SalesDao {
     @Query("SELECT * FROM products WHERE barcode = :barcode LIMIT 1")
     suspend fun getProductByBarcode(barcode: String): Product?
 
+    /** Updates name/barcode in place (REPLACE would delete the row and break links). */
+    @Query("UPDATE products SET name = :name, barcode = :barcode, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateProductDetails(id: Long, name: String, barcode: String, updatedAt: Long)
+
     // --- Packs (box/carton barcodes) ---
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertPackaging(packaging: ProductPackaging): Long

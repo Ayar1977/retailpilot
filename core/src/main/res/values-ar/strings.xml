@@ -200,6 +200,10 @@
     <string name="invoice_col_amount">المبلغ</string>
     <string name="invoice_grand_total">الإجمالي الكلي:</string>
     <string name="invoice_signature">التوقيع المعتمد</string>
+    <string name="edit_product">تعديل المادة</string>
+    <string name="product_barcode">باركود المادة (القطعة الواحدة)</string>
+    <string name="save">حفظ</string>
+    <string name="msg_product_updated">تم تحديث المادة</string>
     <string name="cur_EUR">يورو</string>
     <string name="cur_USD">دولار أمريكي</string>
     <string name="cur_GBP">جنيه إسترليني</string>

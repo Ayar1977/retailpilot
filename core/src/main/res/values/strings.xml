@@ -200,6 +200,10 @@
     <string name="invoice_col_amount">Amount</string>
     <string name="invoice_grand_total">Grand total:</string>
     <string name="invoice_signature">Authorized signature</string>
+    <string name="edit_product">Edit product</string>
+    <string name="product_barcode">Product barcode (single piece)</string>
+    <string name="save">Save</string>
+    <string name="msg_product_updated">Product updated</string>
     <string name="cur_EUR">Euro</string>
     <string name="cur_USD">US Dollar</string>
     <string name="cur_GBP">British Pound</string>

@@ -171,6 +171,7 @@ fun RetailPilotApp(
                                 onAddPackaging = viewModel::addPackaging,
                                 onDeletePackaging = viewModel::deletePackaging,
                                 onScanInto = { onCode -> viewModel.scanBarcode(context, onCode) },
+                                onUpdateProduct = viewModel::updateProductDetails,
                                 onReceiveStock = { productId, qty, costMinor, sellingMinor, batchNumber ->
                                     viewModel.receiveInventoryBatch(
                                         productId = productId,
