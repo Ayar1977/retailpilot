@@ -178,9 +178,11 @@ fun RetailPilotApp(
                         }
                         "Purchases" -> {
                             val purchases by viewModel.purchases.collectAsState(initial = emptyList())
+                            val purchaseLines by viewModel.purchaseLines.collectAsState(initial = emptyList())
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             com.salespro.ui.PurchasesScreen(
                                 purchases = purchases,
+                                purchaseLines = purchaseLines,
                                 products = products,
                                 onReceivePurchase = viewModel::receivePurchase
                             )

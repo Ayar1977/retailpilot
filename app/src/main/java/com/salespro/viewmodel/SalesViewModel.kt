@@ -34,6 +34,7 @@ class SalesViewModel @Inject constructor(
     val products = repository.getAllProducts()
     val sales = repository.getAllSales()
     val purchases = repository.getAllPurchases()
+    val purchaseLines = repository.getAllPurchaseLines()
 
     val activeStockAlerts = repository.getActiveStockAlerts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val pendingReminders = repository.getPendingStockReminders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

@@ -40,6 +40,9 @@ interface SalesDao {
     @Query("SELECT * FROM purchases ORDER BY createdAt DESC")
     fun getAllPurchases(): Flow<List<Purchase>>
 
+    @Query("SELECT * FROM purchase_lines")
+    fun getAllPurchaseLines(): Flow<List<PurchaseLine>>
+
     @Query("UPDATE suppliers SET openingBalanceMinor = openingBalanceMinor + :amountMinor WHERE id = :supplierId")
     suspend fun increaseSupplierBalance(supplierId: String, amountMinor: Long)
 

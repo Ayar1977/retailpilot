@@ -148,6 +148,8 @@ class SalesRepository(
 
     fun getAllPurchases() = dao.getAllPurchases()
 
+    fun getAllPurchaseLines() = dao.getAllPurchaseLines()
+
     suspend fun deleteSaleSafely(sale: Sale) = dao.deleteSaleSafely(sale)
 
     suspend fun updateLineQuantity(lineId: String, newQty: Long) = dao.updateLineQuantity(lineId, newQty)

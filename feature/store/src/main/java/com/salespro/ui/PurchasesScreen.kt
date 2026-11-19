@@ -1,5 +1,7 @@
 package com.salespro.ui
 
+import com.salespro.data.PurchaseLine
+
 import androidx.compose.ui.res.stringResource
 import com.salespro.core.R
 import com.salespro.settings.Money
@@ -26,6 +28,7 @@ import com.salespro.data.PurchaseLineData
 @Composable
 fun PurchasesScreen(
     purchases: List<Purchase>,
+    purchaseLines: List<PurchaseLine> = emptyList(),
     products: List<Product>,
     onReceivePurchase: (Purchase, List<PurchaseLineData>) -> Unit
 ) {
@@ -56,8 +59,13 @@ fun PurchasesScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(purchases) { purchase ->
-                PurchaseHistoryCard(purchase)
+            val productNames = products.associate { it.id to it.name }
+            val linesByPurchase = purchaseLines.groupBy { it.purchaseId }
+            items(purchases, key = { it.id }) { purchase ->
+                val items = linesByPurchase[purchase.id].orEmpty().map { line ->
+                    (productNames[line.productId] ?: "#${line.productId}") to line.quantity
+                }
+                PurchaseHistoryCard(purchase, items)
             }
         }
     }
@@ -75,7 +83,10 @@ fun PurchasesScreen(
 }
 
 @Composable
-fun PurchaseHistoryCard(purchase: Purchase) {
+fun PurchaseHistoryCard(
+    purchase: Purchase,
+    items: List<Pair<String, Long>> = emptyList()
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -87,11 +98,27 @@ fun PurchaseHistoryCard(purchase: Purchase) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    text = purchase.invoiceNumber ?: stringResource(R.string.no_invoice),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                if (items.isEmpty()) {
+                    Text(
+                        text = purchase.invoiceNumber ?: stringResource(R.string.no_invoice),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                } else {
+                    items.forEach { (name, quantity) ->
+                        Text(
+                            text = stringResource(R.string.purchase_line_item, name, quantity),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Text(
+                        text = purchase.invoiceNumber?.let { stringResource(R.string.invoice_label, it) }
+                            ?: stringResource(R.string.no_invoice),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     text = stringResource(R.string.total_label, Money.format(purchase.totalMinor)),
                     style = MaterialTheme.typography.bodyMedium
