@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -66,7 +70,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.dashboard), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -84,21 +88,21 @@ fun AnalyticsScreen(sales: List<Sale>) {
 
             // Phase 1: High Level KPI Cards
             item {
-                Text("Lifetime Overview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.lifetime_overview), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     MetricCard(
-                        title = "Revenue",
-                        value = "₹${String.format(java.util.Locale.getDefault(), "%.0f", totalRevenue)}",
+                        title = stringResource(R.string.revenue),
+                        value = Money.formatMajor(totalRevenue, maxDecimals = 0),
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.primaryContainer
                     )
                     MetricCard(
-                        title = "Profit",
-                        value = "₹${String.format(java.util.Locale.getDefault(), "%.0f", totalProfit)}",
+                        title = stringResource(R.string.profit),
+                        value = Money.formatMajor(totalProfit, maxDecimals = 0),
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.tertiaryContainer,
                         icon = Icons.Default.ShoppingCart
@@ -106,7 +110,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 MetricCard(
-                    title = "Total Items Sold",
+                    title = stringResource(R.string.total_items_sold),
                     value = "$itemsSold",
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.secondaryContainer,
@@ -116,7 +120,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
 
             // Phase 2: Native Canvas 7-Day Chart
             item {
-                Text("Last 7 Days Revenue", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.last_7_days_revenue), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Card(
@@ -153,13 +157,13 @@ fun AnalyticsScreen(sales: List<Sale>) {
 
             // Phase 3: Top Sellers Feed
             item {
-                Text("Top Performing Items", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.top_items), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
             if (topSellers.isEmpty()) {
                 item {
-                    Text("Not enough data to calculate top sellers.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.not_enough_data), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 items(topSellers) { entry ->
@@ -177,7 +181,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(entry.key, fontWeight = FontWeight.SemiBold)
                             }
-                            Text("₹${String.format(java.util.Locale.getDefault(), "%.0f", entry.value)}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(Money.formatMajor(entry.value, maxDecimals = 0), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

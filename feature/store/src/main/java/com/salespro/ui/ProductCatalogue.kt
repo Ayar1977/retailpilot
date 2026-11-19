@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -91,7 +95,7 @@ fun ProductCatalogue(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "In cart",
+                                        contentDescription = stringResource(R.string.in_cart),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -103,7 +107,7 @@ fun ProductCatalogue(
                             Spacer(modifier = Modifier.height(16.dp))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "In cart",
+                                contentDescription = stringResource(R.string.in_cart),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp).padding(bottom = 4.dp)
                             )
@@ -121,7 +125,7 @@ fun ProductCatalogue(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "₹${"%.2f".format((product.activeSellingPriceMinor ?: product.retailPriceMinor ?: product.costPriceMinor) / 100.0)}",
+                        text = Money.format(product.activeSellingPriceMinor ?: product.retailPriceMinor ?: product.costPriceMinor),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (inCart) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
                     )

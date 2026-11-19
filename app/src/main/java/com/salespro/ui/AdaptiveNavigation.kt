@@ -1,5 +1,7 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,15 +30,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class RetailDestination(
-    val label: String,
+    val labelRes: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    Sell("Sell", Icons.Filled.PointOfSale, Icons.Outlined.PointOfSale),
-    Inventory("Inventory", Icons.Filled.Inventory2, Icons.Outlined.Inventory2),
-    Purchases("Purchases", Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
-    Reports("Reports", Icons.Filled.Analytics, Icons.Outlined.Analytics),
-    More("More", Icons.Filled.MoreHoriz, Icons.Outlined.MoreHoriz)
+    Sell(com.salespro.core.R.string.nav_sell, Icons.Filled.PointOfSale, Icons.Outlined.PointOfSale),
+    Inventory(com.salespro.core.R.string.nav_inventory, Icons.Filled.Inventory2, Icons.Outlined.Inventory2),
+    Purchases(com.salespro.core.R.string.nav_purchases, Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
+    Reports(com.salespro.core.R.string.nav_reports, Icons.Filled.Analytics, Icons.Outlined.Analytics),
+    More(com.salespro.core.R.string.nav_more, Icons.Filled.MoreHoriz, Icons.Outlined.MoreHoriz)
 }
 
 /**
@@ -63,10 +65,10 @@ fun AdaptiveNavigation(
                     icon = {
                         Icon(
                             imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                            contentDescription = destination.label
+                            contentDescription = stringResource(destination.labelRes)
                         )
                     },
-                    label = { Text(destination.label) },
+                    label = { Text(stringResource(destination.labelRes)) },
                     selected = isSelected,
                     onClick = { selectedDestination = destination.name }
                 )

@@ -1,5 +1,10 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import androidx.compose.material.icons.filled.QrCodeScanner
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +33,8 @@ fun InventoryScreen(
     activeAlerts: List<StockAlertEvent> = emptyList(),
     pendingReminders: List<StockReminder> = emptyList(),
     onDismissReminder: (String) -> Unit = {},
+    onAddProduct: () -> Unit = {},
+    onScanBarcode: () -> Unit = {},
     onReceiveStock: (productId: Long, quantity: Long, costMinor: Long, sellingMinor: Long, batchNumber: String?) -> Unit
 ) {
     var showReceiveDialog by remember { mutableStateOf(false) }
@@ -37,6 +44,7 @@ fun InventoryScreen(
 
     val filtered = products.filter { it.name.contains(searchText, ignoreCase = true) }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize()) {
         // Header
         Row(
@@ -45,10 +53,15 @@ fun InventoryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Inventory",
+                text = stringResource(R.string.nav_inventory),
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+
+            IconButton(onClick = onScanBarcode) {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = stringResource(R.string.scan_barcode))
+            }
 
             val totalAlerts = activeAlerts.size + pendingReminders.size
             if (totalAlerts > 0) {
@@ -56,12 +69,12 @@ fun InventoryScreen(
                     badge = { Badge { Text(totalAlerts.toString()) } }
                 ) {
                     IconButton(onClick = { showRemindersSheet = true }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Reminders")
+                        Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.reminders))
                     }
                 }
             } else {
                 IconButton(onClick = { showRemindersSheet = true }) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Reminders")
+                    Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.reminders))
                 }
             }
         }
@@ -71,17 +84,26 @@ fun InventoryScreen(
             value = searchText,
             onValueChange = { searchText = it },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            label = { Text("Search products") },
+            label = { Text(stringResource(R.string.search_products)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        if (products.isEmpty()) {
+            Text(
+                text = stringResource(R.string.inventory_empty),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(24.dp)
+            )
+        }
+
         // Product list
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(filtered, key = { it.id }) { product ->
@@ -94,6 +116,16 @@ fun InventoryScreen(
                 )
             }
         }
+    }
+
+    ExtendedFloatingActionButton(
+        onClick = onAddProduct,
+        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+        text = { Text(stringResource(R.string.new_product)) },
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(16.dp)
+    )
     }
 
     if (showReceiveDialog && selectedProduct != null) {
@@ -117,14 +149,14 @@ fun InventoryScreen(
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(
-                    text = "Stock Reminders",
+                    text = stringResource(R.string.stock_reminders),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (pendingReminders.isEmpty()) {
-                    Text("No pending reminders.", modifier = Modifier.padding(bottom = 32.dp))
+                    Text(stringResource(R.string.no_pending_reminders), modifier = Modifier.padding(bottom = 32.dp))
                 } else {
                     LazyColumn(modifier = Modifier.padding(bottom = 32.dp)) {
                         items(pendingReminders) { reminder ->
@@ -140,16 +172,16 @@ fun InventoryScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = product?.name ?: "Unknown Product",
+                                            text = product?.name ?: stringResource(R.string.unknown_product),
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = "Reminder: ${reminder.reminderType.name}",
+                                            text = stringResource(R.string.reminder_type, reminder.reminderType.name),
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
                                     TextButton(onClick = { onDismissReminder(reminder.id) }) {
-                                        Text("Dismiss")
+                                        Text(stringResource(R.string.dismiss))
                                     }
                                 }
                             }
@@ -184,12 +216,12 @@ private fun InventoryProductCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val costDisplay = "Cost: ₹${product.costPriceMinor / 100}.${String.format("%02d", product.costPriceMinor % 100)}"
+                val costDisplay = stringResource(R.string.cost_label, Money.format(product.costPriceMinor))
                 val activeSellingPrice = product.activeSellingPriceMinor
                 val sellingDisplay = if (activeSellingPrice != null && activeSellingPrice > 0) {
-                    "Selling: ₹${activeSellingPrice / 100}.${String.format("%02d", activeSellingPrice % 100)}"
+                    stringResource(R.string.selling_label, Money.format(activeSellingPrice))
                 } else {
-                    "Selling: Not set"
+                    stringResource(R.string.selling_not_set)
                 }
 
                 Text(
@@ -211,9 +243,9 @@ private fun InventoryProductCard(
                 onClick = onReceiveStock,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Receive stock")
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Receive")
+                Text(stringResource(R.string.receive))
             }
         }
     }
@@ -246,7 +278,7 @@ fun ReceiveStockDialog(
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "Receive Stock",
+                    text = stringResource(R.string.receive_stock),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -265,7 +297,7 @@ fun ReceiveStockDialog(
                     value = quantity,
                     onValueChange = { quantity = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Quantity Received") },
+                    label = { Text(stringResource(R.string.quantity_received)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
@@ -277,7 +309,7 @@ fun ReceiveStockDialog(
                     value = costPrice,
                     onValueChange = { costPrice = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Purchase Cost per unit (₹)") },
+                    label = { Text(stringResource(R.string.purchase_cost_per_unit, Money.symbol())) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
@@ -289,7 +321,7 @@ fun ReceiveStockDialog(
                     value = sellingPrice,
                     onValueChange = { sellingPrice = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Selling Price per unit (₹)") },
+                    label = { Text(stringResource(R.string.selling_price_per_unit, Money.symbol())) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
@@ -301,7 +333,7 @@ fun ReceiveStockDialog(
                     value = batchNumber,
                     onValueChange = { batchNumber = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Batch Number (optional)") },
+                    label = { Text(stringResource(R.string.batch_number_optional)) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -313,7 +345,7 @@ fun ReceiveStockDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -328,7 +360,7 @@ fun ReceiveStockDialog(
                         },
                         enabled = (quantity.toLongOrNull() ?: 0) > 0 && (sellingPrice.toDoubleOrNull() ?: 0.0) > 0
                     ) {
-                        Text("Receive Stock")
+                        Text(stringResource(R.string.receive_stock))
                     }
                 }
             }

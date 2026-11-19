@@ -1,5 +1,7 @@
 package com.salespro.viewmodel
 
+import com.salespro.core.R
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.salespro.data.CartResult
@@ -76,13 +78,13 @@ class SalesViewModel @Inject constructor(
                 when (val result = repository.addToCart(productId, quantity)) {
                     is CartResult.Success -> { /* cart updated reactively */ }
                     is CartResult.MissingSellingPrice -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${result.productName} in Inventory first."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
                     }
                     is CartResult.InsufficientStock -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName} (${result.available} available)"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock_available, result.productName, result.available)))
                     }
                     is CartResult.ProductNotFound -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Product not found"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_not_found)))
                     }
                 }
             } catch (e: CancellationException) { throw e }
@@ -103,7 +105,7 @@ class SalesViewModel @Inject constructor(
             try {
                 val draft = repository.observeActiveDraft().firstOrNull()
                 if (draft == null) {
-                    _uiEvent.tryEmit(UiEvent.ShowError("No active cart to complete"))
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_no_active_cart)))
                     return@launch
                 }
 
@@ -112,19 +114,19 @@ class SalesViewModel @Inject constructor(
 
                 when (val result = repository.completeSale(draft.id, totalMinor)) {
                     is SaleResult.Success -> {
-                        _uiEvent.tryEmit(UiEvent.ShowSuccess("Sale completed! Total: ₹${result.totalMinor / 100}.${String.format("%02d", result.totalMinor % 100)}"))
+                        _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_sale_completed_total, com.salespro.settings.Money.format(result.totalMinor))))
                     }
                     is SaleResult.InsufficientStock -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName} (${result.available} available, ${result.requested} needed). Review your cart."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock_needed, result.productName, result.available, result.requested)))
                     }
                     is SaleResult.MissingSellingPrice -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${result.productName} in Inventory."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
                     }
                     is SaleResult.InvalidQuantity -> {
                         _uiEvent.tryEmit(UiEvent.ShowError("Invalid quantity for ${result.productName}."))
                     }
                     is SaleResult.EmptyCart -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Cart is empty."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_cart_empty)))
                     }
                     is SaleResult.InvalidPayment -> {
                         _uiEvent.tryEmit(UiEvent.ShowError("Invalid payment amount."))
@@ -168,7 +170,7 @@ class SalesViewModel @Inject constructor(
                     expiryAt = expiryAt,
                     applySellingPriceToProduct = applySellingPriceToProduct
                 )
-                _uiEvent.tryEmit(UiEvent.ShowSuccess("Stock received: $quantity units"))
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_stock_received, quantity)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
                 _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive stock"))
@@ -183,7 +185,7 @@ class SalesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.receivePurchase(purchase, lines)
-                _uiEvent.tryEmit(UiEvent.ShowSuccess("Purchase received successfully!"))
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_purchase_received)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
                 _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive purchase"))
@@ -238,7 +240,44 @@ class SalesViewModel @Inject constructor(
     }
 
     fun onAddProductDialogShow() {
+        _prefilledEan.value = ""
         _showAddProductDialog.value = true
+    }
+
+    /** Localized text for snackbar messages. */
+    private fun text(id: Int, vararg args: Any): String =
+        com.salespro.settings.AppSettings.string(id, *args)
+
+    /**
+     * Inventory "scan barcode": opens the new-product form with the scanned
+     * barcode filled in, or reports which product already uses it.
+     */
+    fun startScanForNewProduct(context: android.content.Context) {
+        try {
+            val scanner = com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(context)
+            scanner.startScan()
+                .addOnSuccessListener { barcode ->
+                    _hapticTrigger.tryEmit(Unit)
+                    barcode.rawValue?.let { code -> openAddProductForBarcode(code) }
+                }
+                .addOnFailureListener {
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_scan_failed)))
+                }
+        } catch (e: Exception) {
+            _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_scan_failed)))
+        }
+    }
+
+    private fun openAddProductForBarcode(code: String) {
+        viewModelScope.launch {
+            val existing = repository.getProductByBarcode(code)
+            if (existing != null) {
+                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_exists, existing.name)))
+            } else {
+                _prefilledEan.value = code
+                _showAddProductDialog.value = true
+            }
+        }
     }
 
     private val _prefilledEan = MutableStateFlow("")
@@ -345,7 +384,7 @@ class SalesViewModel @Inject constructor(
                             val result = repository.completeSale(draft.id, totalMinor)
                             when (result) {
                                 is SaleResult.Success -> {
-                                    _uiEvent.tryEmit(UiEvent.ShowSuccess("Sale completed!"))
+                                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_sale_completed)))
                                     if (_generateBillToggle.value) {
                                         val price = (result.totalMinor / 100.0)
                                         val file = com.salespro.utils.InvoiceGenerator.generateInvoiceOutput(context, product.name, qty.toInt(), price, phone)
@@ -363,15 +402,15 @@ class SalesViewModel @Inject constructor(
                                         receiptShareManager.shareReceiptText(context, phone, product.name, qty.toInt(), result.totalMinor / 100.0)
                                     }
                                 }
-                                is SaleResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName}"))
-                                is SaleResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError("Set selling price for ${result.productName} first"))
-                                else -> _uiEvent.tryEmit(UiEvent.ShowError("Failed to complete sale"))
+                                is SaleResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock, result.productName)))
+                                is SaleResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
+                                else -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_failed_complete_sale)))
                             }
                         }
                     }
-                    is CartResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${cartResult.productName} in Inventory first."))
-                    is CartResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${cartResult.productName}"))
-                    is CartResult.ProductNotFound -> _uiEvent.tryEmit(UiEvent.ShowError("Product not found"))
+                    is CartResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, cartResult.productName)))
+                    is CartResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock, cartResult.productName)))
+                    is CartResult.ProductNotFound -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_not_found)))
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
@@ -445,7 +484,7 @@ class SalesViewModel @Inject constructor(
                         sellingPriceMinor = retailMinor,
                         applySellingPriceToProduct = true
                     )
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added with $stockQty units"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_with_stock, data.name, stockQty)))
                 } else if (stockQty > 0) {
                     // Stock but no selling price - just add opening balance movement
                     repository.insertStockMovement(com.salespro.data.StockMovement(
@@ -455,13 +494,13 @@ class SalesViewModel @Inject constructor(
                         referenceType = "INITIAL_STOCK",
                         note = "Initial stock added during product creation"
                     ))
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added (set selling price to enable sales)"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_no_price, data.name)))
                 } else {
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added (add stock to enable sales)"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_no_stock, data.name)))
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to add product"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_add_product)))
             }
         }
 

@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +33,7 @@ fun PurchasesScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "Purchases & Receiving",
+            text = stringResource(R.string.purchases_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(16.dp)
@@ -40,9 +44,9 @@ fun PurchasesScreen(
             modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Receive Purchase")
+            Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Receive New Purchase")
+            Text(stringResource(R.string.receive_new_purchase))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -84,16 +88,16 @@ fun PurchaseHistoryCard(purchase: Purchase) {
         ) {
             Column {
                 Text(
-                    text = purchase.invoiceNumber ?: "No Invoice #",
+                    text = purchase.invoiceNumber ?: stringResource(R.string.no_invoice),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Total: ₹${purchase.totalMinor / 100}.${String.format("%02d", purchase.totalMinor % 100)}",
+                    text = stringResource(R.string.total_label, Money.format(purchase.totalMinor)),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Status: ${purchase.status}",
+                    text = stringResource(R.string.status_label, purchase.status.toString()),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -127,13 +131,13 @@ fun ReceivePurchaseDialog(
             shape = RoundedCornerShape(24.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Receive Purchase", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.receive_purchase), style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = invoiceNumber,
                     onValueChange = { invoiceNumber = it },
-                    label = { Text("Invoice Number") },
+                    label = { Text(stringResource(R.string.invoice_number)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true
@@ -146,7 +150,7 @@ fun ReceivePurchaseDialog(
                     onExpandedChange = { expanded = it }
                 ) {
                     OutlinedTextField(
-                        value = selectedProduct?.name ?: "Select Product",
+                        value = selectedProduct?.name ?: stringResource(R.string.select_product),
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -177,7 +181,7 @@ fun ReceivePurchaseDialog(
                 OutlinedTextField(
                     value = quantity,
                     onValueChange = { quantity = it },
-                    label = { Text("Quantity") },
+                    label = { Text(stringResource(R.string.quantity)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -189,7 +193,7 @@ fun ReceivePurchaseDialog(
                 OutlinedTextField(
                     value = costPrice,
                     onValueChange = { costPrice = it },
-                    label = { Text("Unit Cost") },
+                    label = { Text(stringResource(R.string.unit_cost)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -201,7 +205,7 @@ fun ReceivePurchaseDialog(
                 OutlinedTextField(
                     value = sellingPrice,
                     onValueChange = { sellingPrice = it },
-                    label = { Text("Selling Price") },
+                    label = { Text(stringResource(R.string.selling_price)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -213,7 +217,7 @@ fun ReceivePurchaseDialog(
                 OutlinedTextField(
                     value = batchNumber,
                     onValueChange = { batchNumber = it },
-                    label = { Text("Batch Number (Optional)") },
+                    label = { Text(stringResource(R.string.batch_number_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true
@@ -222,7 +226,7 @@ fun ReceivePurchaseDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
@@ -252,7 +256,7 @@ fun ReceivePurchaseDialog(
                         },
                         enabled = selectedProduct != null && (quantity.toLongOrNull() ?: 0) > 0 && (sellingPrice.toDoubleOrNull() ?: 0.0) > 0
                     ) {
-                        Text("Save & Receive")
+                        Text(stringResource(R.string.save_and_receive))
                     }
                 }
             }

@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.salespro.data.SaleLine
-import java.text.NumberFormat
 
 @Composable
 fun CartPane(
@@ -19,18 +22,13 @@ fun CartPane(
     isCheckoutEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance().apply {
-        currency = java.util.Currency.getInstance("INR")
-        maximumFractionDigits = 2
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         Text(
-            text = "Active Cart",
+            text = stringResource(R.string.active_cart),
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -38,7 +36,7 @@ fun CartPane(
 
         if (cartLines.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("Cart is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.cart_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(modifier = Modifier.weight(1f)) {
@@ -55,7 +53,7 @@ fun CartPane(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(line.productNameSnapshot, style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                currencyFormat.format(line.unitPriceMinor / 100.0),
+                                Money.format(line.unitPriceMinor),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -85,7 +83,7 @@ fun CartPane(
             enabled = isCheckoutEnabled && cartLines.isNotEmpty(),
             modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-            Text("Complete Sale • ${currencyFormat.format(totalAmount)}")
+            Text(stringResource(R.string.complete_sale_total, Money.formatMajor(totalAmount)))
         }
     }
 }

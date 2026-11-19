@@ -1,5 +1,11 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import com.salespro.settings.Money
+
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -168,7 +174,7 @@ fun AddProductDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Add New Product",
+                    text = stringResource(R.string.add_new_product),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -222,15 +228,15 @@ fun AddProductDialog(
                                 bitmap?.let { bmp ->
                                     Image(
                                         bitmap = bmp.asImageBitmap(),
-                                        contentDescription = "Selected Photo",
+                                        contentDescription = stringResource(R.string.selected_photo),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
                                 } ?: run {
-                                    Text("+ Photo", style = MaterialTheme.typography.labelSmall)
+                                    Text(stringResource(R.string.add_photo), style = MaterialTheme.typography.labelSmall)
                                 }
                             } else {
-                                Text("+ Photo", style = MaterialTheme.typography.labelSmall)
+                                Text(stringResource(R.string.add_photo), style = MaterialTheme.typography.labelSmall)
                             }
                         }
 
@@ -239,7 +245,7 @@ fun AddProductDialog(
                             onDismissRequest = { showPhotoMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Take Photo") },
+                                text = { Text(stringResource(R.string.take_photo)) },
                                 onClick = {
                                     showPhotoMenu = false
                                     val uri = createImageUri(context)
@@ -248,7 +254,7 @@ fun AddProductDialog(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Choose from Gallery") },
+                                text = { Text(stringResource(R.string.choose_gallery)) },
                                 onClick = {
                                     showPhotoMenu = false
                                     galleryLauncher.launch("image/*")
@@ -260,7 +266,7 @@ fun AddProductDialog(
                     Spacer(modifier = Modifier.width(16.dp))
 
                     Text(
-                        text = if (imagePath.isNotEmpty()) "Photo attached" else "Tap to add photo",
+                        text = if (imagePath.isNotEmpty()) stringResource(R.string.photo_attached) else stringResource(R.string.tap_to_add_photo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -272,7 +278,7 @@ fun AddProductDialog(
                     value = name,
                     onValueChange = { name = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Product Name") },
+                    label = { Text(stringResource(R.string.product_name)) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -283,7 +289,8 @@ fun AddProductDialog(
                     value = costPrice,
                     onValueChange = { costPrice = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Cost Price / Purchase Price (₹)") },
+                    label = { Text(stringResource(R.string.cost_price_label, Money.symbol())) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -294,7 +301,8 @@ fun AddProductDialog(
                     value = retailPrice,
                     onValueChange = { retailPrice = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Retail Price / Selling Price (₹)") },
+                    label = { Text(stringResource(R.string.retail_price_label, Money.symbol())) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -305,7 +313,8 @@ fun AddProductDialog(
                     value = initialStock,
                     onValueChange = { initialStock = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Initial Stock (Batch Quantity)") },
+                    label = { Text(stringResource(R.string.initial_stock)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -316,7 +325,7 @@ fun AddProductDialog(
                     value = ean,
                     onValueChange = { ean = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Barcode (EAN)") },
+                    label = { Text(stringResource(R.string.barcode_ean)) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -324,12 +333,12 @@ fun AddProductDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = showAdvanced, onCheckedChange = { showAdvanced = it })
-                    Text("Advanced Identity & Telugu", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.advanced_details), style = MaterialTheme.typography.bodyMedium)
                 }
 
                 if (showAdvanced) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Display Language", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.display_language), style = MaterialTheme.typography.labelMedium)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -342,32 +351,32 @@ fun AddProductDialog(
                         FilterChip(
                             selected = displayLanguage == "TELUGU",
                             onClick = { displayLanguage = "TELUGU" },
-                            label = { Text("Telugu") }
+                            label = { Text(stringResource(R.string.lang_telugu)) }
                         )
                         FilterChip(
                             selected = displayLanguage == "DUAL",
                             onClick = { displayLanguage = "DUAL" },
-                            label = { Text("Dual") }
+                            label = { Text(stringResource(R.string.lang_dual)) }
                         )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = brandEn, onValueChange = { brandEn = it },
-                        modifier = Modifier.fillMaxWidth(), label = { Text("Brand (English)") },
+                        modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.brand_english)) },
                         placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., Sree Bell" else "") },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = typeEn, onValueChange = { typeEn = it },
-                        modifier = Modifier.fillMaxWidth(), label = { Text("Type (English)") },
+                        modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.type_english)) },
                         placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., Sona Masoori" else "") },
                         singleLine = true
                     )
 
                     if (displayLanguage == "TELUGU" || displayLanguage == "DUAL") {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Telugu Localisation (Offline Assisted)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.telugu_localisation), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         OutlinedTextField(
                             value = brandTe, onValueChange = { brandTe = it },
                             modifier = Modifier.fillMaxWidth(), label = { Text("Brand (Telugu) - బ్రాండ్") }, singleLine = true
@@ -382,13 +391,13 @@ fun AddProductDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = pkgMeasure, onValueChange = { pkgMeasure = it },
-                            modifier = Modifier.weight(1f), label = { Text("Measure") },
+                            modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.measure)) },
                             placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., 25" else "") },
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = pkgUnit, onValueChange = { pkgUnit = it },
-                            modifier = Modifier.weight(1f), label = { Text("Unit") },
+                            modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.unit)) },
                             placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., kg" else "") },
                             singleLine = true
                         )
@@ -402,7 +411,7 @@ fun AddProductDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -421,7 +430,7 @@ fun AddProductDialog(
                         },
                         enabled = name.isNotBlank() && costPrice.isNotBlank() && retailPrice.isNotBlank()
                     ) {
-                        Text("Add Product")
+                        Text(stringResource(R.string.add_product))
                     }
                 }
             }
@@ -450,7 +459,7 @@ fun UpdatePriceDialog(
                 modifier = Modifier.padding(24.dp)
             ) {
                 Text(
-                    text = "Update Cost Price",
+                    text = stringResource(R.string.update_cost_price),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -458,13 +467,13 @@ fun UpdatePriceDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Product: ${product.name}",
+                    text = stringResource(R.string.product_label, product.name),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
-                    text = "Current Cost: ₹${String.format(java.util.Locale.getDefault(), "%.2f", product.costPriceMinor / 100.0)}",
+                    text = stringResource(R.string.current_cost, Money.format(product.costPriceMinor)),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -475,7 +484,7 @@ fun UpdatePriceDialog(
                     value = newCostPrice,
                     onValueChange = onPriceChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("New Cost Price (₹)") },
+                    label = { Text(stringResource(R.string.new_cost_price, Money.symbol())) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -487,14 +496,14 @@ fun UpdatePriceDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = onConfirm,
                         enabled = newCostPrice.isNotBlank()
                     ) {
-                        Text("Update Price")
+                        Text(stringResource(R.string.update_price))
                     }
                 }
             }
@@ -529,7 +538,7 @@ fun CheckoutDialog(
     ) { isGranted ->
         if (!isGranted) {
             onSendSmsToggleChange(false)
-            android.widget.Toast.makeText(context, "SMS Permission Denied", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.sms_permission_denied), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -543,11 +552,11 @@ fun CheckoutDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Checkout", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.checkout), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                InfoRow("Product", product.name)
-                InfoRow("Cost", "₹${String.format(java.util.Locale.getDefault(), "%.2f", product.costPriceMinor / 100.0)}")
+                InfoRow(stringResource(R.string.product), product.name)
+                InfoRow(stringResource(R.string.cost), Money.format(product.costPriceMinor))
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -555,14 +564,14 @@ fun CheckoutDialog(
                         value = inputQuantity,
                         onValueChange = onQuantityChange,
                         modifier = Modifier.weight(0.3f),
-                        label = { Text("Qty") },
+                        label = { Text(stringResource(R.string.qty)) },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = inputPrice,
                         onValueChange = onPriceChange,
                         modifier = Modifier.weight(0.7f),
-                        label = { Text("Sell Price") },
+                        label = { Text(stringResource(R.string.sell_price)) },
                         singleLine = true
                     )
                 }
@@ -574,8 +583,8 @@ fun CheckoutDialog(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        InfoRow("Total Sale", "₹${String.format(java.util.Locale.getDefault(), "%.2f", localTotalRevenue)}")
-                        InfoRow("Net Profit", "₹${String.format(java.util.Locale.getDefault(), "%.2f", localProfit)}", isProfit = true, isPositive = localProfit >= 0)
+                        InfoRow(stringResource(R.string.total_sale), Money.formatMajor(localTotalRevenue))
+                        InfoRow(stringResource(R.string.net_profit), Money.formatMajor(localProfit), isProfit = true, isPositive = localProfit >= 0)
                     }
                 }
 
@@ -585,7 +594,7 @@ fun CheckoutDialog(
                     value = customerPhone,
                     onValueChange = onPhoneChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Customer Mobile (Optional)") },
+                    label = { Text(stringResource(R.string.customer_mobile)) },
                     singleLine = true
                 )
 
@@ -593,7 +602,7 @@ fun CheckoutDialog(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = generateBillToggle, onCheckedChange = onGenerateBillToggleChange)
-                    Text("PDF Bill", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.pdf_bill), style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.width(16.dp))
                     Checkbox(
                         checked = sendSmsToggle,
@@ -606,16 +615,16 @@ fun CheckoutDialog(
                             onSendSmsToggleChange(isChecked)
                         }
                     )
-                    Text("Auto SMS", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.auto_sms), style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = onConfirm, enabled = inputPrice.isNotBlank() && inputQuantity.isNotBlank()) {
-                        Text("Confirm & Sell")
+                        Text(stringResource(R.string.confirm_and_sell))
                     }
                 }
             }

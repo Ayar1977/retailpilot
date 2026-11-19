@@ -97,7 +97,7 @@ object InvoiceGenerator {
         val totalY = rowY + 60f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         canvas.drawText("Grand Total:", 380f, totalY, paint)
-        canvas.drawText(String.format(java.util.Locale.getDefault(), "Rs. %.2f", totalAmount), 480f, totalY, paint)
+        canvas.drawText(com.salespro.settings.Money.formatMajor(totalAmount), 480f, totalY, paint)
 
         // Standard Store Footer
         paint.textAlign = Paint.Align.CENTER

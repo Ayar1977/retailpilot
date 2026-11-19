@@ -1,5 +1,8 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +22,7 @@ fun BusinessProfileScreen(
     isSaving: Boolean,
     onSaveProfile: (businessName: String, ownerName: String, phone: String, address: String, taxNumber: String, receiptFooter: String, logoUri: String?) -> Unit,
     onLoadReferenceProducts: () -> Unit,
+    onSettingsChanged: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var businessName by remember(profile) { mutableStateOf(profile?.businessName ?: "") }
@@ -33,7 +37,7 @@ fun BusinessProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Business Profile") },
+                title = { Text(stringResource(R.string.profile_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -44,8 +48,8 @@ fun BusinessProfileScreen(
                 onClick = {
                     onSaveProfile(businessName, ownerName, phone, address, taxNumber, receiptFooter, profile?.logoUri)
                 },
-                icon = { Icon(Icons.Default.Save, contentDescription = "Save Profile") },
-                text = { Text(if (isSaving) "Saving..." else "Save Changes") }
+                icon = { Icon(Icons.Default.Save, contentDescription = stringResource(R.string.save_profile)) },
+                text = { Text(if (isSaving) stringResource(R.string.saving) else stringResource(R.string.save_changes)) }
             )
         },
         modifier = modifier
@@ -58,6 +62,8 @@ fun BusinessProfileScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            SettingsCard(onSettingsChanged = onSettingsChanged)
+
             Card {
                 Column(
                     modifier = Modifier
@@ -66,28 +72,28 @@ fun BusinessProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Core Information",
+                        stringResource(R.string.core_information),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     OutlinedTextField(
                         value = businessName,
                         onValueChange = { businessName = it },
-                        label = { Text("Business Name *") },
+                        label = { Text(stringResource(R.string.business_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = ownerName,
                         onValueChange = { ownerName = it },
-                        label = { Text("Owner Name") },
+                        label = { Text(stringResource(R.string.owner_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text("Phone Number") },
+                        label = { Text(stringResource(R.string.phone_number)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -102,28 +108,28 @@ fun BusinessProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Receipt & Invoice Details",
+                        stringResource(R.string.receipt_details),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     OutlinedTextField(
                         value = taxNumber,
                         onValueChange = { taxNumber = it },
-                        label = { Text("Tax Registration No. (e.g., GSTIN)") },
+                        label = { Text(stringResource(R.string.tax_number)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = { Text("Business Address") },
+                        label = { Text(stringResource(R.string.business_address)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
                     OutlinedTextField(
                         value = receiptFooter,
                         onValueChange = { receiptFooter = it },
-                        label = { Text("Receipt Footer Message") },
+                        label = { Text(stringResource(R.string.receipt_footer)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -138,19 +144,19 @@ fun BusinessProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Data & Setup",
+                        stringResource(R.string.data_setup),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Load standard reference products to jump-start your initial inventory setup.",
+                        stringResource(R.string.data_setup_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedButton(
                         onClick = onLoadReferenceProducts,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Add Reference Products")
+                        Text(stringResource(R.string.add_reference_products))
                     }
                 }
             }

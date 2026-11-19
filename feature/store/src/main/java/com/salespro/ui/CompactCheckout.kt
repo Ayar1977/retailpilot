@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -8,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.salespro.data.Product
 import com.salespro.data.SaleLine
-import java.text.NumberFormat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 
@@ -26,11 +29,6 @@ fun CompactCheckout(
     var cartSheetVisible by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val currencyFormat = NumberFormat.getCurrencyInstance().apply {
-        currency = java.util.Currency.getInstance("INR")
-        maximumFractionDigits = 2
-    }
-
     val totalAmount = cartLines.sumOf { it.lineTotalMinor } / 100.0
 
     Scaffold(
@@ -39,8 +37,8 @@ fun CompactCheckout(
             if (cartLines.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = { cartSheetVisible = true },
-                    icon = { Icon(Icons.Default.ShoppingCart, "View Cart") },
-                    text = { Text("${cartLines.size} items • ${currencyFormat.format(totalAmount)}") }
+                    icon = { Icon(Icons.Default.ShoppingCart, stringResource(R.string.view_cart)) },
+                    text = { Text(stringResource(R.string.cart_items_total, cartLines.size, Money.formatMajor(totalAmount))) }
                 )
             }
         },

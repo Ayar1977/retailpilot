@@ -1,5 +1,11 @@
 package com.salespro
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.salespro.settings.AppLanguage
+import com.salespro.settings.AppSettings
+
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -37,19 +43,39 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: SalesViewModel by viewModels()
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        // Apply the language chosen in More > Settings (Arabic switches the layout to right-to-left).
+        super.attachBaseContext(AppSettings.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             com.salespro.ui.theme.SalesProTheme {
-                RetailPilotApp(viewModel)
+                val layoutDirection = when (AppSettings.language) {
+                    AppLanguage.ARABIC -> LayoutDirection.Rtl
+                    AppLanguage.ENGLISH -> LayoutDirection.Ltr
+                    AppLanguage.SYSTEM -> LocalLayoutDirection.current
+                }
+                CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                    RetailPilotApp(
+                        viewModel = viewModel,
+                        onSettingsChanged = { recreate() }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun RetailPilotApp(viewModel: SalesViewModel) {
+fun RetailPilotApp(
+    viewModel: SalesViewModel,
+    onSettingsChanged: () -> Unit = {}
+) {
     val stateHolder = rememberSaveableStateHolder()
+    val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
+    val prefilledEan by viewModel.prefilledEan.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -78,11 +104,9 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             val searchText by viewModel.searchText.collectAsState()
                             val selectedProduct by viewModel.selectedProduct.collectAsState()
-                            val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
                             val showUpdatePriceDialog by viewModel.showUpdatePriceDialog.collectAsState()
                             val productToUpdate by viewModel.productToUpdate.collectAsState()
                             val newCostPrice by viewModel.newCostPrice.collectAsState()
-                            val prefilledEan by viewModel.prefilledEan.collectAsState()
 
                             val showPriceInputDialog by viewModel.showPriceInputDialog.collectAsState()
                             val inputPrice by viewModel.inputPrice.collectAsState()
@@ -101,14 +125,6 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                                 onCheckout = { viewModel.completeCartCheckout(context) },
                                 isCheckoutEnabled = !completionInProgress
                             )
-
-                            if (showAddProductDialog) {
-                                AddProductDialog(
-                                    prefilledEan = prefilledEan,
-                                    onDismiss = viewModel::onAddProductDialogDismiss,
-                                    onConfirm = viewModel::addProduct
-                                )
-                            }
 
                             if (showUpdatePriceDialog && productToUpdate != null) {
                                 UpdatePriceDialog(
@@ -147,6 +163,8 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                                 activeAlerts = activeAlerts,
                                 pendingReminders = pendingReminders,
                                 onDismissReminder = viewModel::markReminderCompleted,
+                                onAddProduct = viewModel::onAddProductDialogShow,
+                                onScanBarcode = { viewModel.startScanForNewProduct(context) },
                                 onReceiveStock = { productId, qty, costMinor, sellingMinor, batchNumber ->
                                     viewModel.receiveInventoryBatch(
                                         productId = productId,
@@ -183,11 +201,21 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                                 onLoadReferenceProducts = {
                                     bpViewModel.loadReferenceProducts() // Inserts Coke
                                     viewModel.onSetupRiceRequested() // Triggers Rice form
-                                }
+                                },
+                                onSettingsChanged = onSettingsChanged
                             )
                         }
                     }
                 }
+            }
+
+            // Available from every tab (Inventory button, barcode scan, More > reference products)
+            if (showAddProductDialog) {
+                AddProductDialog(
+                    prefilledEan = prefilledEan,
+                    onDismiss = viewModel::onAddProductDialogDismiss,
+                    onConfirm = viewModel::addProduct
+                )
             }
         }
     }

@@ -17,7 +17,7 @@ class DefaultReceiptShareManager : ReceiptShareManager {
             Receipt from RetailPilot
 
             Item: $productName x $quantity
-            Total Amount: ₹${String.format(java.util.Locale.getDefault(), "%.2f", totalAmount)}
+            Total Amount: ${com.salespro.settings.Money.formatMajor(totalAmount)}
 
             Thank you for shopping with us!
         """.trimIndent()
