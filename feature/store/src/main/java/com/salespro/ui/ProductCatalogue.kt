@@ -62,7 +62,9 @@ fun ProductCatalogue(
                 )
             ) {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
@@ -120,7 +122,14 @@ fun ProductCatalogue(
                         text = product.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = if (inCart) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        // No weight here: in a lazy grid the card height is open-ended, so a
+                        // weighted name got zero height whenever the product had a photo.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
