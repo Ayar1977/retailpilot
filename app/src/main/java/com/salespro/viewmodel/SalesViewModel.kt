@@ -35,6 +35,7 @@ class SalesViewModel @Inject constructor(
     val sales = repository.getAllSales()
     val purchases = repository.getAllPurchases()
     val purchaseLines = repository.getAllPurchaseLines()
+    val packagings = repository.getAllPackagings()
 
     val activeStockAlerts = repository.getActiveStockAlerts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val pendingReminders = repository.getPendingStockReminders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -254,12 +255,17 @@ class SalesViewModel @Inject constructor(
      * barcode filled in, or reports which product already uses it.
      */
     fun startScanForNewProduct(context: android.content.Context) {
+        scanBarcode(context) { code -> openAddProductForBarcode(code) }
+    }
+
+    /** Opens the camera barcode scanner once and delivers the scanned text. */
+    fun scanBarcode(context: android.content.Context, onCode: (String) -> Unit) {
         try {
             val scanner = com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(context)
             scanner.startScan()
                 .addOnSuccessListener { barcode ->
                     _hapticTrigger.tryEmit(Unit)
-                    barcode.rawValue?.let { code -> openAddProductForBarcode(code) }
+                    barcode.rawValue?.let { code -> onCode(code.trim()) }
                 }
                 .addOnFailureListener {
                     _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_scan_failed)))
@@ -269,14 +275,73 @@ class SalesViewModel @Inject constructor(
         }
     }
 
+    private fun describeMatch(match: com.salespro.data.BarcodeMatch): String {
+        val pack = match.packaging
+        return if (pack == null) match.product.name else "${pack.name} (${match.product.name} × ${pack.unitsPerPack})"
+    }
+
     private fun openAddProductForBarcode(code: String) {
         viewModelScope.launch {
-            val existing = repository.getProductByBarcode(code)
+            val existing = repository.resolveBarcode(code)
             if (existing != null) {
-                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_exists, existing.name)))
+                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(existing))))
             } else {
                 _prefilledEan.value = code
                 _showAddProductDialog.value = true
+            }
+        }
+    }
+
+    /** Purchases: scanning a piece adds 1, scanning a box adds its piece count. */
+    fun scanForPurchase(context: android.content.Context, onResult: (productId: Long, units: Long) -> Unit) {
+        scanBarcode(context) { code ->
+            viewModelScope.launch {
+                val match = repository.resolveBarcode(code)
+                if (match == null) {
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_unknown_barcode, code)))
+                } else {
+                    onResult(match.product.id, match.units)
+                }
+            }
+        }
+    }
+
+    fun addPackaging(productId: Long, name: String, barcode: String, units: Long) {
+        val code = barcode.trim()
+        if (code.isEmpty() || units < 2L) {
+            _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_pack)))
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val existing = repository.resolveBarcode(code)
+                if (existing != null) {
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(existing))))
+                    return@launch
+                }
+                repository.insertPackaging(
+                    com.salespro.data.ProductPackaging(
+                        productId = productId,
+                        name = name,
+                        barcode = code,
+                        unitsPerPack = units
+                    )
+                )
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_pack_added, name, units)))
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_invalid_pack)))
+            }
+        }
+    }
+
+    fun deletePackaging(id: Long) {
+        viewModelScope.launch {
+            try {
+                repository.deletePackaging(id)
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Error"))
             }
         }
     }
@@ -511,10 +576,10 @@ class SalesViewModel @Inject constructor(
 
     fun onBarcodeScanned(eanCode: String) {
         viewModelScope.launch {
-            val product = repository.getProductByBarcode(eanCode)
-            if (product != null) {
-                // Add to cart directly with authoritative price
-                addToCart(product.id, 1L)
+            val match = repository.resolveBarcode(eanCode)
+            if (match != null) {
+                // Piece barcode adds 1, pack barcode adds the pack's piece count
+                addToCart(match.product.id, match.units)
             } else {
                 _prefilledEan.value = eanCode
                 _showAddProductDialog.value = true

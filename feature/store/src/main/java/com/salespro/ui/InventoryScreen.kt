@@ -1,5 +1,8 @@
 package com.salespro.ui
 
+import com.salespro.data.ProductPackaging
+import androidx.compose.material.icons.filled.Inventory2
+
 import androidx.compose.ui.res.stringResource
 import com.salespro.core.R
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -35,12 +38,18 @@ fun InventoryScreen(
     onDismissReminder: (String) -> Unit = {},
     onAddProduct: () -> Unit = {},
     onScanBarcode: () -> Unit = {},
+    packagings: List<ProductPackaging> = emptyList(),
+    onAddPackaging: (productId: Long, name: String, barcode: String, units: Long) -> Unit = { _, _, _, _ -> },
+    onDeletePackaging: (Long) -> Unit = {},
+    onScanInto: (onCode: (String) -> Unit) -> Unit = {},
     onReceiveStock: (productId: Long, quantity: Long, costMinor: Long, sellingMinor: Long, batchNumber: String?) -> Unit
 ) {
     var showReceiveDialog by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var searchText by remember { mutableStateOf("") }
     var showRemindersSheet by remember { mutableStateOf(false) }
+    var packsProduct by remember { mutableStateOf<Product?>(null) }
+    val packsByProduct = packagings.groupBy { it.productId }
 
     val filtered = products.filter { it.name.contains(searchText, ignoreCase = true) }
 
@@ -109,6 +118,8 @@ fun InventoryScreen(
             items(filtered, key = { it.id }) { product ->
                 InventoryProductCard(
                     product = product,
+                    packCount = packsByProduct[product.id]?.size ?: 0,
+                    onManagePacks = { packsProduct = product },
                     onReceiveStock = {
                         selectedProduct = product
                         showReceiveDialog = true
@@ -140,6 +151,17 @@ fun InventoryScreen(
                 showReceiveDialog = false
                 selectedProduct = null
             }
+        )
+    }
+
+    packsProduct?.let { product ->
+        PackagingDialog(
+            product = product,
+            packagings = packsByProduct[product.id].orEmpty(),
+            onAdd = { name, barcode, units -> onAddPackaging(product.id, name, barcode, units) },
+            onDelete = { pack -> onDeletePackaging(pack.id) },
+            onScanBarcode = onScanInto,
+            onDismiss = { packsProduct = null }
         )
     }
 
@@ -196,6 +218,8 @@ fun InventoryScreen(
 @Composable
 private fun InventoryProductCard(
     product: Product,
+    packCount: Int,
+    onManagePacks: () -> Unit,
     onReceiveStock: () -> Unit
 ) {
     Card(
@@ -237,6 +261,14 @@ private fun InventoryProductCard(
                     else
                         MaterialTheme.colorScheme.error
                 )
+                TextButton(
+                    onClick = onManagePacks,
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                ) {
+                    Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.packs_count, packCount), style = MaterialTheme.typography.labelMedium)
+                }
             }
 
             FilledTonalButton(

@@ -53,6 +53,22 @@ class SalesRepository(
 
     suspend fun getProductByBarcode(barcode: String): Product? = dao.getProductByBarcode(barcode)
 
+    /** Finds a product by its own barcode (1 piece) or by a pack barcode (N pieces). */
+    suspend fun resolveBarcode(barcode: String): BarcodeMatch? {
+        val code = barcode.trim()
+        if (code.isEmpty()) return null
+        dao.getProductByBarcode(code)?.let { return BarcodeMatch(it, 1L, null) }
+        val pack = dao.getPackagingByBarcode(code) ?: return null
+        val product = dao.getProductById(pack.productId) ?: return null
+        return BarcodeMatch(product, pack.unitsPerPack, pack)
+    }
+
+    fun getAllPackagings() = dao.getAllPackagings()
+
+    suspend fun insertPackaging(packaging: ProductPackaging): Long = dao.insertPackaging(packaging)
+
+    suspend fun deletePackaging(id: Long) = dao.deletePackaging(id)
+
     suspend fun getProductByName(name: String): Product? = dao.getProductByName(name)
 
     fun getActiveStockAlerts(): Flow<List<StockAlertEvent>> = dao.getActiveStockAlerts()

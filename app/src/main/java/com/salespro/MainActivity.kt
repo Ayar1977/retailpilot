@@ -123,7 +123,8 @@ fun RetailPilotApp(
                                 onProductSelected = { p -> viewModel.addToCart(p.id, 1L) },
                                 onUpdateQuantity = viewModel::updateCartQuantity,
                                 onCheckout = { viewModel.completeCartCheckout(context) },
-                                isCheckoutEnabled = !completionInProgress
+                                isCheckoutEnabled = !completionInProgress,
+                                onScan = { viewModel.startScan(context) }
                             )
 
                             if (showUpdatePriceDialog && productToUpdate != null) {
@@ -158,6 +159,7 @@ fun RetailPilotApp(
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             val activeAlerts by viewModel.activeStockAlerts.collectAsState()
                             val pendingReminders by viewModel.pendingReminders.collectAsState()
+                            val packagings by viewModel.packagings.collectAsState(initial = emptyList())
                             InventoryScreen(
                                 products = products,
                                 activeAlerts = activeAlerts,
@@ -165,6 +167,10 @@ fun RetailPilotApp(
                                 onDismissReminder = viewModel::markReminderCompleted,
                                 onAddProduct = viewModel::onAddProductDialogShow,
                                 onScanBarcode = { viewModel.startScanForNewProduct(context) },
+                                packagings = packagings,
+                                onAddPackaging = viewModel::addPackaging,
+                                onDeletePackaging = viewModel::deletePackaging,
+                                onScanInto = { onCode -> viewModel.scanBarcode(context, onCode) },
                                 onReceiveStock = { productId, qty, costMinor, sellingMinor, batchNumber ->
                                     viewModel.receiveInventoryBatch(
                                         productId = productId,
@@ -184,7 +190,8 @@ fun RetailPilotApp(
                                 purchases = purchases,
                                 purchaseLines = purchaseLines,
                                 products = products,
-                                onReceivePurchase = viewModel::receivePurchase
+                                onReceivePurchase = viewModel::receivePurchase,
+                                onScanForPurchase = { onResult -> viewModel.scanForPurchase(context, onResult) }
                             )
                         }
                         "Reports" -> {

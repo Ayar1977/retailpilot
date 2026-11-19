@@ -61,6 +61,19 @@ interface SalesDao {
     @Query("SELECT * FROM products WHERE barcode = :barcode LIMIT 1")
     suspend fun getProductByBarcode(barcode: String): Product?
 
+    // --- Packs (box/carton barcodes) ---
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertPackaging(packaging: ProductPackaging): Long
+
+    @Query("DELETE FROM product_packagings WHERE id = :id")
+    suspend fun deletePackaging(id: Long)
+
+    @Query("SELECT * FROM product_packagings WHERE barcode = :barcode LIMIT 1")
+    suspend fun getPackagingByBarcode(barcode: String): ProductPackaging?
+
+    @Query("SELECT * FROM product_packagings ORDER BY productId, unitsPerPack")
+    fun getAllPackagings(): Flow<List<ProductPackaging>>
+
     @Query("SELECT * FROM products WHERE name = :name LIMIT 1")
     suspend fun getProductByName(name: String): Product?
 

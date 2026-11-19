@@ -1,5 +1,7 @@
 package com.salespro.ui
 
+import androidx.compose.material.icons.filled.QrCodeScanner
+
 import com.salespro.data.PurchaseLine
 
 import androidx.compose.ui.res.stringResource
@@ -30,7 +32,8 @@ fun PurchasesScreen(
     purchases: List<Purchase>,
     purchaseLines: List<PurchaseLine> = emptyList(),
     products: List<Product>,
-    onReceivePurchase: (Purchase, List<PurchaseLineData>) -> Unit
+    onReceivePurchase: (Purchase, List<PurchaseLineData>) -> Unit,
+    onScanForPurchase: (onResult: (productId: Long, units: Long) -> Unit) -> Unit = {}
 ) {
     var showReceiveDialog by remember { mutableStateOf(false) }
 
@@ -73,6 +76,7 @@ fun PurchasesScreen(
     if (showReceiveDialog) {
         ReceivePurchaseDialog(
             products = products,
+            onScan = onScanForPurchase,
             onDismiss = { showReceiveDialog = false },
             onConfirm = { purchase, lines ->
                 onReceivePurchase(purchase, lines)
@@ -137,6 +141,7 @@ fun PurchaseHistoryCard(
 @Composable
 fun ReceivePurchaseDialog(
     products: List<Product>,
+    onScan: (onResult: (productId: Long, units: Long) -> Unit) -> Unit = {},
     onDismiss: () -> Unit,
     onConfirm: (Purchase, List<PurchaseLineData>) -> Unit
 ) {
@@ -169,6 +174,32 @@ fun ReceivePurchaseDialog(
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        onScan { productId, units ->
+                            val prod = products.find { it.id == productId } ?: return@onScan
+                            if (selectedProduct?.id != prod.id) {
+                                selectedProduct = prod
+                                quantity = units.toString()
+                                costPrice = (prod.costPriceMinor / 100.0).toString()
+                                sellingPrice = if (prod.activeSellingPriceMinor != null && prod.activeSellingPriceMinor!! > 0)
+                                    (prod.activeSellingPriceMinor!! / 100.0).toString() else ""
+                            } else {
+                                // Same product scanned again: add the pieces (1 per piece, N per box)
+                                quantity = ((quantity.toLongOrNull() ?: 0L) + units).toString()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.scan_barcode))
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 

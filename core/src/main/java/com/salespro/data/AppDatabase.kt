@@ -14,10 +14,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Payment::class, StockMovement::class, BusinessProfile::class,
         StockBatch::class, ProductPriceHistory::class, SaleLineAllocation::class,
         Supplier::class, Purchase::class, PurchaseLine::class,
-        StockAlertEvent::class, StockReminder::class, ReferenceProductLink::class
+        StockAlertEvent::class, StockReminder::class, ReferenceProductLink::class,
+        ProductPackaging::class
     ],
     views = [ProductStockView::class],
-    version = 12,
+    version = 13,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -36,10 +37,28 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "sales_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
                     .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        /** Adds pack/box barcodes (e.g. a box of 24 with its own barcode). */
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `product_packagings` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`productId` INTEGER NOT NULL, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`barcode` TEXT NOT NULL, " +
+                        "`unitsPerPack` INTEGER NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_product_packagings_barcode` ON `product_packagings` (`barcode`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_product_packagings_productId` ON `product_packagings` (`productId`)")
             }
         }
 
