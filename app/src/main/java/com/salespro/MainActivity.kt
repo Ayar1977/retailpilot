@@ -1,5 +1,11 @@
 package com.salespro
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.salespro.settings.AppLanguage
+import com.salespro.settings.AppSettings
+
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -37,19 +43,40 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: SalesViewModel by viewModels()
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        // Apply the language chosen in More > Settings (Arabic switches the layout to right-to-left).
+        super.attachBaseContext(AppSettings.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             com.salespro.ui.theme.SalesProTheme {
-                RetailPilotApp(viewModel)
+                val layoutDirection = when (AppSettings.language) {
+                    AppLanguage.ARABIC -> LayoutDirection.Rtl
+                    AppLanguage.ENGLISH -> LayoutDirection.Ltr
+                    AppLanguage.SYSTEM -> LocalLayoutDirection.current
+                }
+                CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                    RetailPilotApp(
+                        viewModel = viewModel,
+                        onSettingsChanged = { recreate() }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun RetailPilotApp(viewModel: SalesViewModel) {
+fun RetailPilotApp(
+    viewModel: SalesViewModel,
+    onSettingsChanged: () -> Unit = {}
+) {
     val stateHolder = rememberSaveableStateHolder()
+    val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
+    val prefilledEan by viewModel.prefilledEan.collectAsState()
+    val allProducts by viewModel.products.collectAsState(initial = emptyList())
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -78,11 +105,9 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             val searchText by viewModel.searchText.collectAsState()
                             val selectedProduct by viewModel.selectedProduct.collectAsState()
-                            val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
                             val showUpdatePriceDialog by viewModel.showUpdatePriceDialog.collectAsState()
                             val productToUpdate by viewModel.productToUpdate.collectAsState()
                             val newCostPrice by viewModel.newCostPrice.collectAsState()
-                            val prefilledEan by viewModel.prefilledEan.collectAsState()
 
                             val showPriceInputDialog by viewModel.showPriceInputDialog.collectAsState()
                             val inputPrice by viewModel.inputPrice.collectAsState()
@@ -99,16 +124,9 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                                 onProductSelected = { p -> viewModel.addToCart(p.id, 1L) },
                                 onUpdateQuantity = viewModel::updateCartQuantity,
                                 onCheckout = { viewModel.completeCartCheckout(context) },
-                                isCheckoutEnabled = !completionInProgress
+                                isCheckoutEnabled = !completionInProgress,
+                                onScan = { viewModel.startScan(context) }
                             )
-
-                            if (showAddProductDialog) {
-                                AddProductDialog(
-                                    prefilledEan = prefilledEan,
-                                    onDismiss = viewModel::onAddProductDialogDismiss,
-                                    onConfirm = viewModel::addProduct
-                                )
-                            }
 
                             if (showUpdatePriceDialog && productToUpdate != null) {
                                 UpdatePriceDialog(
@@ -142,11 +160,19 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             val activeAlerts by viewModel.activeStockAlerts.collectAsState()
                             val pendingReminders by viewModel.pendingReminders.collectAsState()
+                            val packagings by viewModel.packagings.collectAsState(initial = emptyList())
                             InventoryScreen(
                                 products = products,
                                 activeAlerts = activeAlerts,
                                 pendingReminders = pendingReminders,
                                 onDismissReminder = viewModel::markReminderCompleted,
+                                onAddProduct = viewModel::onAddProductDialogShow,
+                                onScanBarcode = { viewModel.startScanForNewProduct(context) },
+                                packagings = packagings,
+                                onAddPackaging = viewModel::addPackaging,
+                                onDeletePackaging = viewModel::deletePackaging,
+                                onScanInto = { onCode -> viewModel.scanBarcode(context, onCode) },
+                                onUpdateProduct = viewModel::updateProductDetails,
                                 onReceiveStock = { productId, qty, costMinor, sellingMinor, batchNumber ->
                                     viewModel.receiveInventoryBatch(
                                         productId = productId,
@@ -160,11 +186,14 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                         }
                         "Purchases" -> {
                             val purchases by viewModel.purchases.collectAsState(initial = emptyList())
+                            val purchaseLines by viewModel.purchaseLines.collectAsState(initial = emptyList())
                             val products by viewModel.products.collectAsState(initial = emptyList())
                             com.salespro.ui.PurchasesScreen(
                                 purchases = purchases,
+                                purchaseLines = purchaseLines,
                                 products = products,
-                                onReceivePurchase = viewModel::receivePurchase
+                                onReceivePurchase = viewModel::receivePurchase,
+                                onScanForPurchase = { onResult -> viewModel.scanForPurchase(context, onResult) }
                             )
                         }
                         "Reports" -> {
@@ -183,11 +212,26 @@ fun RetailPilotApp(viewModel: SalesViewModel) {
                                 onLoadReferenceProducts = {
                                     bpViewModel.loadReferenceProducts() // Inserts Coke
                                     viewModel.onSetupRiceRequested() // Triggers Rice form
-                                }
+                                },
+                                onSettingsChanged = onSettingsChanged
                             )
                         }
                     }
                 }
+            }
+
+            // Available from every tab (Inventory button, barcode scan, More > reference products)
+            if (showAddProductDialog) {
+                AddProductDialog(
+                    prefilledEan = prefilledEan,
+                    onDismiss = viewModel::onAddProductDialogDismiss,
+                    onConfirm = viewModel::addProduct,
+                    products = allProducts,
+                    onCreatePack = { productId, name, barcode, units ->
+                        viewModel.addPackaging(productId, name, barcode, units)
+                        viewModel.onAddProductDialogDismiss()
+                    }
+                )
             }
         }
     }

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 class RetailPilotApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        com.salespro.settings.AppSettings.init(this)
 
         // Stock Reminders are now scheduled precisely per-event rather than polling.
     }

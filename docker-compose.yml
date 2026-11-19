@@ -1,0 +1,19 @@
+# Build the APK locally with Docker Desktop:
+#   docker compose run --rm apk
+# Output: out/RetailPilot-debug.apk
+# One-time signing key: docker compose run --rm apk bash /workspace/docker/create-signing-key.sh
+services:
+  apk:
+    build:
+      context: docker
+    image: retailpilot-android-builder
+    volumes:
+      - .:/workspace
+      - gradle-cache:/gradle-cache
+      # Signing key folder. Keep it OUTSIDE the repository and back it up.
+      # Set RETAILPILOT_KEYS_DIR in a .env file next to this file, e.g.
+      #   RETAILPILOT_KEYS_DIR=C:/Users/you/.retailpilot-keys
+      - ${RETAILPILOT_KEYS_DIR:-./keys}:/keys
+
+volumes:
+  gradle-cache:

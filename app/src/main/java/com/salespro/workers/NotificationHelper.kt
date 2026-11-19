@@ -23,9 +23,11 @@ class NotificationHelper(private val context: Context) {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val descriptionText = "Notifications for low stock alerts"
+            val localized = com.salespro.settings.AppSettings.wrap(context)
+            val descriptionText = localized.getString(com.salespro.core.R.string.notif_channel_desc)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+            val channelName = localized.getString(com.salespro.core.R.string.notif_channel_name)
+            val channel = NotificationChannel(CHANNEL_ID, channelName, importance).apply {
                 description = descriptionText
             }
             val notificationManager: NotificationManager =

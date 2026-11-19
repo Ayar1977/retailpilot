@@ -1,5 +1,7 @@
 package com.salespro.viewmodel
 
+import com.salespro.core.R
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.salespro.data.CartResult
@@ -32,6 +34,8 @@ class SalesViewModel @Inject constructor(
     val products = repository.getAllProducts()
     val sales = repository.getAllSales()
     val purchases = repository.getAllPurchases()
+    val purchaseLines = repository.getAllPurchaseLines()
+    val packagings = repository.getAllPackagings()
 
     val activeStockAlerts = repository.getActiveStockAlerts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val pendingReminders = repository.getPendingStockReminders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -62,7 +66,7 @@ class SalesViewModel @Inject constructor(
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to update quantity"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_update_quantity)))
             }
         }
     }
@@ -76,18 +80,18 @@ class SalesViewModel @Inject constructor(
                 when (val result = repository.addToCart(productId, quantity)) {
                     is CartResult.Success -> { /* cart updated reactively */ }
                     is CartResult.MissingSellingPrice -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${result.productName} in Inventory first."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
                     }
                     is CartResult.InsufficientStock -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName} (${result.available} available)"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock_available, result.productName, result.available)))
                     }
                     is CartResult.ProductNotFound -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Product not found"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_not_found)))
                     }
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to add to cart"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_add_to_cart)))
             }
         }
     }
@@ -103,7 +107,7 @@ class SalesViewModel @Inject constructor(
             try {
                 val draft = repository.observeActiveDraft().firstOrNull()
                 if (draft == null) {
-                    _uiEvent.tryEmit(UiEvent.ShowError("No active cart to complete"))
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_no_active_cart)))
                     return@launch
                 }
 
@@ -112,33 +116,33 @@ class SalesViewModel @Inject constructor(
 
                 when (val result = repository.completeSale(draft.id, totalMinor)) {
                     is SaleResult.Success -> {
-                        _uiEvent.tryEmit(UiEvent.ShowSuccess("Sale completed! Total: ₹${result.totalMinor / 100}.${String.format("%02d", result.totalMinor % 100)}"))
+                        _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_sale_completed_total, com.salespro.settings.Money.format(result.totalMinor))))
                     }
                     is SaleResult.InsufficientStock -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName} (${result.available} available, ${result.requested} needed). Review your cart."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock_needed, result.productName, result.available, result.requested)))
                     }
                     is SaleResult.MissingSellingPrice -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${result.productName} in Inventory."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
                     }
                     is SaleResult.InvalidQuantity -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Invalid quantity for ${result.productName}."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_quantity, result.productName)))
                     }
                     is SaleResult.EmptyCart -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Cart is empty."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_cart_empty)))
                     }
                     is SaleResult.InvalidPayment -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Invalid payment amount."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_payment)))
                     }
                     is SaleResult.AlreadyCompleted -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("This sale is already completed."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_sale_already_completed)))
                     }
                     is SaleResult.DatabaseFailure -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Database error: ${result.message}"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_database_error, result.message)))
                     }
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Unexpected error"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_unexpected_error)))
             } finally {
                 _completionInProgress.value = false
             }
@@ -168,10 +172,10 @@ class SalesViewModel @Inject constructor(
                     expiryAt = expiryAt,
                     applySellingPriceToProduct = applySellingPriceToProduct
                 )
-                _uiEvent.tryEmit(UiEvent.ShowSuccess("Stock received: $quantity units"))
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_stock_received, quantity)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive stock"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_receive_stock)))
             }
         }
     }
@@ -183,10 +187,10 @@ class SalesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.receivePurchase(purchase, lines)
-                _uiEvent.tryEmit(UiEvent.ShowSuccess("Purchase received successfully!"))
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_purchase_received)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive purchase"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_receive_purchase)))
             }
         }
     }
@@ -238,7 +242,131 @@ class SalesViewModel @Inject constructor(
     }
 
     fun onAddProductDialogShow() {
+        _prefilledEan.value = ""
         _showAddProductDialog.value = true
+    }
+
+    /** Localized text for snackbar messages. */
+    private fun text(id: Int, vararg args: Any): String =
+        com.salespro.settings.AppSettings.string(id, *args)
+
+    /**
+     * Inventory "scan barcode": opens the new-product form with the scanned
+     * barcode filled in, or reports which product already uses it.
+     */
+    fun startScanForNewProduct(context: android.content.Context) {
+        scanBarcode(context) { code -> openAddProductForBarcode(code) }
+    }
+
+    /** Opens the camera barcode scanner once and delivers the scanned text. */
+    fun scanBarcode(context: android.content.Context, onCode: (String) -> Unit) {
+        try {
+            val scanner = com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(context)
+            scanner.startScan()
+                .addOnSuccessListener { barcode ->
+                    _hapticTrigger.tryEmit(Unit)
+                    barcode.rawValue?.let { code -> onCode(code.trim()) }
+                }
+                .addOnFailureListener {
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_scan_failed)))
+                }
+        } catch (e: Exception) {
+            _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_scan_failed)))
+        }
+    }
+
+    private fun describeMatch(match: com.salespro.data.BarcodeMatch): String {
+        val pack = match.packaging
+        return if (pack == null) match.product.name else "${pack.name} (${match.product.name} × ${pack.unitsPerPack})"
+    }
+
+    private fun openAddProductForBarcode(code: String) {
+        viewModelScope.launch {
+            val existing = repository.resolveBarcode(code)
+            if (existing != null) {
+                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(existing))))
+            } else {
+                _prefilledEan.value = code
+                _showAddProductDialog.value = true
+            }
+        }
+    }
+
+    /** Purchases: scanning a piece adds 1, scanning a box adds its piece count. */
+    fun scanForPurchase(context: android.content.Context, onResult: (productId: Long, units: Long) -> Unit) {
+        scanBarcode(context) { code ->
+            viewModelScope.launch {
+                val match = repository.resolveBarcode(code)
+                if (match == null) {
+                    // Unknown barcode: open the new-product form with the barcode filled in
+                    _prefilledEan.value = code
+                    _showAddProductDialog.value = true
+                } else {
+                    onResult(match.product.id, match.units)
+                }
+            }
+        }
+    }
+
+    fun addPackaging(productId: Long, name: String, barcode: String, units: Long) {
+        val code = barcode.trim()
+        if (code.isEmpty() || units < 2L) {
+            _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_pack)))
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val existing = repository.resolveBarcode(code)
+                if (existing != null) {
+                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(existing))))
+                    return@launch
+                }
+                repository.insertPackaging(
+                    com.salespro.data.ProductPackaging(
+                        productId = productId,
+                        name = name,
+                        barcode = code,
+                        unitsPerPack = units
+                    )
+                )
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_pack_added, name, units)))
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_invalid_pack)))
+            }
+        }
+    }
+
+    fun updateProductDetails(productId: Long, name: String, barcode: String) {
+        val code = barcode.trim()
+        viewModelScope.launch {
+            try {
+                if (code.isNotEmpty()) {
+                    val match = repository.resolveBarcode(code)
+                    val isSameProduct = match != null && match.packaging == null && match.product.id == productId
+                    if (match != null && !isSameProduct) {
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_barcode_in_use, describeMatch(match))))
+                        return@launch
+                    }
+                }
+                repository.updateProductDetails(productId, name.trim(), code)
+                _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_updated)))
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_unexpected_error)))
+            }
+        }
+    }
+
+    fun deletePackaging(id: Long) {
+        viewModelScope.launch {
+            try {
+                repository.deletePackaging(id)
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_delete_pack)))
+            }
+        }
     }
 
     private val _prefilledEan = MutableStateFlow("")
@@ -345,7 +473,7 @@ class SalesViewModel @Inject constructor(
                             val result = repository.completeSale(draft.id, totalMinor)
                             when (result) {
                                 is SaleResult.Success -> {
-                                    _uiEvent.tryEmit(UiEvent.ShowSuccess("Sale completed!"))
+                                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_sale_completed)))
                                     if (_generateBillToggle.value) {
                                         val price = (result.totalMinor / 100.0)
                                         val file = com.salespro.utils.InvoiceGenerator.generateInvoiceOutput(context, product.name, qty.toInt(), price, phone)
@@ -363,19 +491,19 @@ class SalesViewModel @Inject constructor(
                                         receiptShareManager.shareReceiptText(context, phone, product.name, qty.toInt(), result.totalMinor / 100.0)
                                     }
                                 }
-                                is SaleResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${result.productName}"))
-                                is SaleResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError("Set selling price for ${result.productName} first"))
-                                else -> _uiEvent.tryEmit(UiEvent.ShowError("Failed to complete sale"))
+                                is SaleResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock, result.productName)))
+                                is SaleResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
+                                else -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_failed_complete_sale)))
                             }
                         }
                     }
-                    is CartResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError("Set a selling price for ${cartResult.productName} in Inventory first."))
-                    is CartResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError("Insufficient stock for ${cartResult.productName}"))
-                    is CartResult.ProductNotFound -> _uiEvent.tryEmit(UiEvent.ShowError("Product not found"))
+                    is CartResult.MissingSellingPrice -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, cartResult.productName)))
+                    is CartResult.InsufficientStock -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_insufficient_stock, cartResult.productName)))
+                    is CartResult.ProductNotFound -> _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_product_not_found)))
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to complete sale"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_complete_sale)))
             }
         }
 
@@ -392,7 +520,7 @@ class SalesViewModel @Inject constructor(
                 repository.deleteSaleSafely(sale)
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Cannot delete this sale"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_delete_sale)))
             }
         }
     }
@@ -445,7 +573,7 @@ class SalesViewModel @Inject constructor(
                         sellingPriceMinor = retailMinor,
                         applySellingPriceToProduct = true
                     )
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added with $stockQty units"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_with_stock, data.name, stockQty)))
                 } else if (stockQty > 0) {
                     // Stock but no selling price - just add opening balance movement
                     repository.insertStockMovement(com.salespro.data.StockMovement(
@@ -455,13 +583,13 @@ class SalesViewModel @Inject constructor(
                         referenceType = "INITIAL_STOCK",
                         note = "Initial stock added during product creation"
                     ))
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added (set selling price to enable sales)"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_no_price, data.name)))
                 } else {
-                    _uiEvent.tryEmit(UiEvent.ShowSuccess("${data.name} added (add stock to enable sales)"))
+                    _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_product_added_no_stock, data.name)))
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to add product"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_add_product)))
             }
         }
 
@@ -471,10 +599,10 @@ class SalesViewModel @Inject constructor(
 
     fun onBarcodeScanned(eanCode: String) {
         viewModelScope.launch {
-            val product = repository.getProductByBarcode(eanCode)
-            if (product != null) {
-                // Add to cart directly with authoritative price
-                addToCart(product.id, 1L)
+            val match = repository.resolveBarcode(eanCode)
+            if (match != null) {
+                // Piece barcode adds 1, pack barcode adds the pack's piece count
+                addToCart(match.product.id, match.units)
             } else {
                 _prefilledEan.value = eanCode
                 _showAddProductDialog.value = true
@@ -526,9 +654,9 @@ class SalesViewModel @Inject constructor(
             handler.post {
                 if (items.isNotEmpty()) {
                     importProductsFromInvoice(items)
-                    android.widget.Toast.makeText(context, "Parsed ${items.size} items from Invoice!", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, text(R.string.msg_invoice_parsed, items.size), android.widget.Toast.LENGTH_LONG).show()
                 } else {
-                    android.widget.Toast.makeText(context, "Failed to parse any items...", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, text(R.string.msg_invoice_parse_failed), android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -539,7 +667,7 @@ class SalesViewModel @Inject constructor(
             try {
                 repository.markReminderCompleted(id)
             } catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError("Could not clear reminder"))
+                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_failed_clear_reminder)))
             }
         }
     }

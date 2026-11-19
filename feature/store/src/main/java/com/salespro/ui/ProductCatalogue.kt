@@ -1,5 +1,9 @@
 package com.salespro.ui
 
+import androidx.compose.ui.res.stringResource
+import com.salespro.core.R
+import com.salespro.settings.Money
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -58,7 +62,9 @@ fun ProductCatalogue(
                 )
             ) {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
@@ -91,7 +97,7 @@ fun ProductCatalogue(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "In cart",
+                                        contentDescription = stringResource(R.string.in_cart),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -103,7 +109,7 @@ fun ProductCatalogue(
                             Spacer(modifier = Modifier.height(16.dp))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "In cart",
+                                contentDescription = stringResource(R.string.in_cart),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp).padding(bottom = 4.dp)
                             )
@@ -116,12 +122,19 @@ fun ProductCatalogue(
                         text = product.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = if (inCart) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        // No weight here: in a lazy grid the card height is open-ended, so a
+                        // weighted name got zero height whenever the product had a photo.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "₹${"%.2f".format((product.activeSellingPriceMinor ?: product.retailPriceMinor ?: product.costPriceMinor) / 100.0)}",
+                        text = Money.format(product.activeSellingPriceMinor ?: product.retailPriceMinor ?: product.costPriceMinor),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (inCart) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
                     )

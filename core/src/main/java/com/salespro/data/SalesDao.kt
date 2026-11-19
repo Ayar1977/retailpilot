@@ -40,6 +40,9 @@ interface SalesDao {
     @Query("SELECT * FROM purchases ORDER BY createdAt DESC")
     fun getAllPurchases(): Flow<List<Purchase>>
 
+    @Query("SELECT * FROM purchase_lines")
+    fun getAllPurchaseLines(): Flow<List<PurchaseLine>>
+
     @Query("UPDATE suppliers SET openingBalanceMinor = openingBalanceMinor + :amountMinor WHERE id = :supplierId")
     suspend fun increaseSupplierBalance(supplierId: String, amountMinor: Long)
 
@@ -57,6 +60,23 @@ interface SalesDao {
 
     @Query("SELECT * FROM products WHERE barcode = :barcode LIMIT 1")
     suspend fun getProductByBarcode(barcode: String): Product?
+
+    /** Updates name/barcode in place (REPLACE would delete the row and break links). */
+    @Query("UPDATE products SET name = :name, barcode = :barcode, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateProductDetails(id: Long, name: String, barcode: String, updatedAt: Long)
+
+    // --- Packs (box/carton barcodes) ---
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertPackaging(packaging: ProductPackaging): Long
+
+    @Query("DELETE FROM product_packagings WHERE id = :id")
+    suspend fun deletePackaging(id: Long)
+
+    @Query("SELECT * FROM product_packagings WHERE barcode = :barcode LIMIT 1")
+    suspend fun getPackagingByBarcode(barcode: String): ProductPackaging?
+
+    @Query("SELECT * FROM product_packagings ORDER BY productId, unitsPerPack")
+    fun getAllPackagings(): Flow<List<ProductPackaging>>
 
     @Query("SELECT * FROM products WHERE name = :name LIMIT 1")
     suspend fun getProductByName(name: String): Product?

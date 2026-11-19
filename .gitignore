@@ -73,3 +73,13 @@ lint/intermediates/
 lint/generated/
 lint/outputs/
 lint/tmp/
+
+# Docker build output
+/out/
+.gradlew-lf
+
+# Local signing keys and Docker settings (never commit)
+/keys/
+.env
+*.jks
+keystore.properties
