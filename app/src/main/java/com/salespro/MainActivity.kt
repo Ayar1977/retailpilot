@@ -76,6 +76,7 @@ fun RetailPilotApp(
     val stateHolder = rememberSaveableStateHolder()
     val showAddProductDialog by viewModel.showAddProductDialog.collectAsState()
     val prefilledEan by viewModel.prefilledEan.collectAsState()
+    val allProducts by viewModel.products.collectAsState(initial = emptyList())
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -224,7 +225,12 @@ fun RetailPilotApp(
                 AddProductDialog(
                     prefilledEan = prefilledEan,
                     onDismiss = viewModel::onAddProductDialogDismiss,
-                    onConfirm = viewModel::addProduct
+                    onConfirm = viewModel::addProduct,
+                    products = allProducts,
+                    onCreatePack = { productId, name, barcode, units ->
+                        viewModel.addPackaging(productId, name, barcode, units)
+                        viewModel.onAddProductDialogDismiss()
+                    }
                 )
             }
         }

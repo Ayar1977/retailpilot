@@ -106,13 +106,23 @@ data class AddProductData(
     val displayLanguage: String = "ENGLISH"
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductDialog(
     prefilledEan: String = "",
     onDismiss: () -> Unit,
-    onConfirm: (AddProductData) -> Unit
+    onConfirm: (AddProductData) -> Unit,
+    products: List<Product> = emptyList(),
+    onCreatePack: (productId: Long, name: String, barcode: String, units: Long) -> Unit = { _, _, _, _ -> }
 ) {
     val context = LocalContext.current
+    // "Box of an existing product" mode: the scanned barcode becomes a pack barcode
+    val defaultPackName = stringResource(R.string.default_pack_name)
+    var boxMode by remember(prefilledEan) { mutableStateOf(false) }
+    var boxProduct by remember(prefilledEan) { mutableStateOf<Product?>(null) }
+    var boxProductMenu by remember { mutableStateOf(false) }
+    var boxName by remember(prefilledEan) { mutableStateOf("") }
+    var boxUnits by remember(prefilledEan) { mutableStateOf("") }
     var name by remember(prefilledEan) { mutableStateOf("") }
     var costPrice by remember(prefilledEan) { mutableStateOf("") }
     var retailPrice by remember(prefilledEan) { mutableStateOf("") }
@@ -179,7 +189,101 @@ fun AddProductDialog(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (products.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = !boxMode,
+                            onClick = { boxMode = false },
+                            label = { Text(stringResource(R.string.new_product)) }
+                        )
+                        FilterChip(
+                            selected = boxMode,
+                            onClick = { boxMode = true },
+                            label = { Text(stringResource(R.string.mode_box_of_existing)) }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                if (boxMode) {
+                    ExposedDropdownMenuBox(
+                        expanded = boxProductMenu,
+                        onExpandedChange = { boxProductMenu = it }
+                    ) {
+                        OutlinedTextField(
+                            value = boxProduct?.name ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.pack_of_product)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = boxProductMenu) },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = boxProductMenu,
+                            onDismissRequest = { boxProductMenu = false }
+                        ) {
+                            products.forEach { p ->
+                                DropdownMenuItem(
+                                    text = { Text(p.name) },
+                                    onClick = {
+                                        boxProduct = p
+                                        boxProductMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = boxName,
+                        onValueChange = { boxName = it },
+                        label = { Text(stringResource(R.string.pack_name)) },
+                        placeholder = { Text(defaultPackName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = ean,
+                        onValueChange = { ean = it },
+                        label = { Text(stringResource(R.string.pack_barcode)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = boxUnits,
+                        onValueChange = { boxUnits = it.filter { ch -> ch.isDigit() } },
+                        label = { Text(stringResource(R.string.pack_units)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onDismiss) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                boxProduct?.let { p ->
+                                    onCreatePack(p.id, boxName.trim().ifBlank { defaultPackName }, ean.trim(), boxUnits.toLongOrNull() ?: 0L)
+                                }
+                            },
+                            enabled = boxProduct != null && ean.isNotBlank() && (boxUnits.toLongOrNull() ?: 0L) >= 2L
+                        ) {
+                            Text(stringResource(R.string.add_pack))
+                        }
+                    }
+                } else {
 
                 // Photo picker preview & button
                 Row(
@@ -393,6 +497,7 @@ fun AddProductDialog(
                         Text(stringResource(R.string.add_product))
                     }
                 }
+                } // end of "new product" mode
             }
         }
     }

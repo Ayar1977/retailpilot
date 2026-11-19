@@ -204,6 +204,8 @@
     <string name="product_barcode">باركود المادة (القطعة الواحدة)</string>
     <string name="save">حفظ</string>
     <string name="msg_product_updated">تم تحديث المادة</string>
+    <string name="mode_box_of_existing">صندوق لمادة موجودة</string>
+    <string name="pack_of_product">المادة داخل الصندوق</string>
     <string name="cur_EUR">يورو</string>
     <string name="cur_USD">دولار أمريكي</string>
     <string name="cur_GBP">جنيه إسترليني</string>

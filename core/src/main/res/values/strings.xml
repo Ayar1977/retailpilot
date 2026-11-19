@@ -204,6 +204,8 @@
     <string name="product_barcode">Product barcode (single piece)</string>
     <string name="save">Save</string>
     <string name="msg_product_updated">Product updated</string>
+    <string name="mode_box_of_existing">Box of an existing product</string>
+    <string name="pack_of_product">Product inside the box</string>
     <string name="cur_EUR">Euro</string>
     <string name="cur_USD">US Dollar</string>
     <string name="cur_GBP">British Pound</string>
