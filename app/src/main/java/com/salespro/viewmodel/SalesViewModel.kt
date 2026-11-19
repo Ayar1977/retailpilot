@@ -298,7 +298,9 @@ class SalesViewModel @Inject constructor(
             viewModelScope.launch {
                 val match = repository.resolveBarcode(code)
                 if (match == null) {
-                    _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_unknown_barcode, code)))
+                    // Unknown barcode: open the new-product form with the barcode filled in
+                    _prefilledEan.value = code
+                    _showAddProductDialog.value = true
                 } else {
                     onResult(match.product.id, match.units)
                 }
