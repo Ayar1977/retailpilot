@@ -1,0 +1,14 @@
+# Build the APK locally with Docker Desktop:
+#   docker compose run --rm apk
+# Output: out/RetailPilot-debug.apk
+services:
+  apk:
+    build:
+      context: docker
+    image: retailpilot-android-builder
+    volumes:
+      - .:/workspace
+      - gradle-cache:/gradle-cache
+
+volumes:
+  gradle-cache:
