@@ -66,7 +66,7 @@ class SalesViewModel @Inject constructor(
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to update quantity"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_update_quantity)))
             }
         }
     }
@@ -91,7 +91,7 @@ class SalesViewModel @Inject constructor(
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to add to cart"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_add_to_cart)))
             }
         }
     }
@@ -125,24 +125,24 @@ class SalesViewModel @Inject constructor(
                         _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_set_selling_price, result.productName)))
                     }
                     is SaleResult.InvalidQuantity -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Invalid quantity for ${result.productName}."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_quantity, result.productName)))
                     }
                     is SaleResult.EmptyCart -> {
                         _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_cart_empty)))
                     }
                     is SaleResult.InvalidPayment -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Invalid payment amount."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_invalid_payment)))
                     }
                     is SaleResult.AlreadyCompleted -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("This sale is already completed."))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_sale_already_completed)))
                     }
                     is SaleResult.DatabaseFailure -> {
-                        _uiEvent.tryEmit(UiEvent.ShowError("Database error: ${result.message}"))
+                        _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_database_error, result.message)))
                     }
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Unexpected error"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_unexpected_error)))
             } finally {
                 _completionInProgress.value = false
             }
@@ -175,7 +175,7 @@ class SalesViewModel @Inject constructor(
                 _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_stock_received, quantity)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive stock"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_receive_stock)))
             }
         }
     }
@@ -190,7 +190,7 @@ class SalesViewModel @Inject constructor(
                 _uiEvent.tryEmit(UiEvent.ShowSuccess(text(R.string.msg_purchase_received)))
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to receive purchase"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_receive_purchase)))
             }
         }
     }
@@ -341,7 +341,7 @@ class SalesViewModel @Inject constructor(
                 repository.deletePackaging(id)
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Error"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_delete_pack)))
             }
         }
     }
@@ -480,7 +480,7 @@ class SalesViewModel @Inject constructor(
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Failed to complete sale"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_complete_sale)))
             }
         }
 
@@ -497,7 +497,7 @@ class SalesViewModel @Inject constructor(
                 repository.deleteSaleSafely(sale)
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: "Cannot delete this sale"))
+                _uiEvent.tryEmit(UiEvent.ShowError(e.message ?: text(R.string.msg_failed_delete_sale)))
             }
         }
     }
@@ -631,9 +631,9 @@ class SalesViewModel @Inject constructor(
             handler.post {
                 if (items.isNotEmpty()) {
                     importProductsFromInvoice(items)
-                    android.widget.Toast.makeText(context, "Parsed ${items.size} items from Invoice!", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, text(R.string.msg_invoice_parsed, items.size), android.widget.Toast.LENGTH_LONG).show()
                 } else {
-                    android.widget.Toast.makeText(context, "Failed to parse any items...", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, text(R.string.msg_invoice_parse_failed), android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -644,7 +644,7 @@ class SalesViewModel @Inject constructor(
             try {
                 repository.markReminderCompleted(id)
             } catch (e: Exception) {
-                _uiEvent.tryEmit(UiEvent.ShowError("Could not clear reminder"))
+                _uiEvent.tryEmit(UiEvent.ShowError(text(R.string.msg_failed_clear_reminder)))
             }
         }
     }

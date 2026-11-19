@@ -38,8 +38,8 @@ class StockReminderWorker(
             // For now, basic notification
             notificationHelper.showStockAlertNotification(
                 id = reminder.id.hashCode(),
-                title = "Low Stock Alert: ${product.name}",
-                content = "You have $available left in stock."
+                title = com.salespro.settings.AppSettings.string(com.salespro.core.R.string.notif_low_stock_title, product.name),
+                content = com.salespro.settings.AppSettings.string(com.salespro.core.R.string.notif_low_stock_text, available)
             )
 
             // Mark as notified / completed (for brevity we complete it)

@@ -28,6 +28,7 @@ object AppSettings {
     private const val PREFS_NAME = "retailpilot_settings"
     private const val KEY_LANGUAGE = "language"
     private const val KEY_CURRENCY = "currency"
+    private const val KEY_LAST_BACKUP = "last_backup_at"
 
     /** Keeps the original behaviour for existing installs until the user picks a currency. */
     const val DEFAULT_CURRENCY = "INR"
@@ -54,6 +55,22 @@ object AppSettings {
 
     fun setCurrency(code: String) {
         prefs?.edit()?.putString(KEY_CURRENCY, code)?.apply()
+    }
+
+    /** Time of the last successful backup (0 = never). */
+    val lastBackupAt: Long
+        get() = prefs?.getLong(KEY_LAST_BACKUP, 0L) ?: 0L
+
+    fun setLastBackupAt(time: Long) {
+        prefs?.edit()?.putLong(KEY_LAST_BACKUP, time)?.apply()
+    }
+
+    /** Applies settings stored in a backup. Written synchronously: the app restarts right after. */
+    fun restoreFromBackup(languageCode: String?, currencyCode: String?) {
+        val editor = prefs?.edit() ?: return
+        if (languageCode != null) editor.putString(KEY_LANGUAGE, languageCode)
+        if (currencyCode != null) editor.putString(KEY_CURRENCY, currencyCode)
+        editor.commit()
     }
 
     /** The locale chosen by the user, or null to follow the device language. */

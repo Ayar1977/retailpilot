@@ -338,67 +338,27 @@ fun AddProductDialog(
 
                 if (showAdvanced) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(stringResource(R.string.display_language), style = MaterialTheme.typography.labelMedium)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = displayLanguage == "ENGLISH",
-                            onClick = { displayLanguage = "ENGLISH" },
-                            label = { Text("English") }
-                        )
-                        FilterChip(
-                            selected = displayLanguage == "TELUGU",
-                            onClick = { displayLanguage = "TELUGU" },
-                            label = { Text(stringResource(R.string.lang_telugu)) }
-                        )
-                        FilterChip(
-                            selected = displayLanguage == "DUAL",
-                            onClick = { displayLanguage = "DUAL" },
-                            label = { Text(stringResource(R.string.lang_dual)) }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = brandEn, onValueChange = { brandEn = it },
                         modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.brand_english)) },
-                        placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., Sree Bell" else "") },
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = typeEn, onValueChange = { typeEn = it },
                         modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.type_english)) },
-                        placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., Sona Masoori" else "") },
                         singleLine = true
                     )
-
-                    if (displayLanguage == "TELUGU" || displayLanguage == "DUAL") {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(stringResource(R.string.telugu_localisation), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        OutlinedTextField(
-                            value = brandTe, onValueChange = { brandTe = it },
-                            modifier = Modifier.fillMaxWidth(), label = { Text("Brand (Telugu) - బ్రాండ్") }, singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = typeTe, onValueChange = { typeTe = it },
-                            modifier = Modifier.fillMaxWidth(), label = { Text("Type (Telugu) - రకం") }, singleLine = true
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = pkgMeasure, onValueChange = { pkgMeasure = it },
                             modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.measure)) },
-                            placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., 25" else "") },
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = pkgUnit, onValueChange = { pkgUnit = it },
                             modifier = Modifier.weight(1f), label = { Text(stringResource(R.string.unit)) },
-                            placeholder = { Text(if (prefilledEan == "REF-RICE-SETUP") "e.g., kg" else "") },
                             singleLine = true
                         )
                     }

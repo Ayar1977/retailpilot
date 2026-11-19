@@ -198,7 +198,7 @@ fun InventoryScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = stringResource(R.string.reminder_type, reminder.reminderType.name),
+                                            text = stringResource(R.string.reminder_type, reminderTypeLabel(reminder.reminderType)),
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
@@ -398,4 +398,11 @@ fun ReceiveStockDialog(
             }
         }
     }
+}
+
+@Composable
+private fun reminderTypeLabel(type: com.salespro.data.StockReminderType): String = when (type) {
+    com.salespro.data.StockReminderType.UPDATE_TODAY -> stringResource(R.string.reminder_UPDATE_TODAY)
+    com.salespro.data.StockReminderType.TONIGHT -> stringResource(R.string.reminder_TONIGHT)
+    com.salespro.data.StockReminderType.NOT_NEEDED -> stringResource(R.string.reminder_NOT_NEEDED)
 }

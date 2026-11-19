@@ -64,6 +64,8 @@ fun BusinessProfileScreen(
         ) {
             SettingsCard(onSettingsChanged = onSettingsChanged)
 
+            BackupCard()
+
             Card {
                 Column(
                     modifier = Modifier

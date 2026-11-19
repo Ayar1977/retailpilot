@@ -128,7 +128,7 @@ fun PurchaseHistoryCard(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = stringResource(R.string.status_label, purchase.status.toString()),
+                    text = stringResource(R.string.status_label, purchaseStatusLabel(purchase.status)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -320,4 +320,13 @@ fun ReceivePurchaseDialog(
             }
         }
     }
+}
+
+@Composable
+private fun purchaseStatusLabel(status: com.salespro.data.PurchaseStatus): String = when (status) {
+    com.salespro.data.PurchaseStatus.DRAFT -> stringResource(R.string.purchase_status_DRAFT)
+    com.salespro.data.PurchaseStatus.RECEIVED -> stringResource(R.string.purchase_status_RECEIVED)
+    com.salespro.data.PurchaseStatus.PARTIALLY_PAID -> stringResource(R.string.purchase_status_PARTIALLY_PAID)
+    com.salespro.data.PurchaseStatus.PAID -> stringResource(R.string.purchase_status_PAID)
+    com.salespro.data.PurchaseStatus.CANCELLED -> stringResource(R.string.purchase_status_CANCELLED)
 }

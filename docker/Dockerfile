@@ -24,8 +24,6 @@ ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-to
 RUN yes | sdkmanager --licenses > /dev/null \
  && sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-COPY build.sh /usr/local/bin/build-apk
-RUN chmod +x /usr/local/bin/build-apk
-
 WORKDIR /workspace
-CMD ["build-apk"]
+# Scripts are read from the mounted repository, so editing them needs no image rebuild
+CMD ["bash", "/workspace/docker/build.sh"]

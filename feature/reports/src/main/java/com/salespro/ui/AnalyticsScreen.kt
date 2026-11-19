@@ -60,7 +60,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
 
     // Top 3 Sellers
     val topSellers = remember(sales) {
-        val sorted = sales.groupBy { "Invoice ${it.invoiceNumber}" }
+        val sorted = sales.groupBy { it.invoiceNumber }
              .mapValues { entry -> entry.value.sumOf { (it.totalMinor / 100.0) } }
              .entries.sortedByDescending { it.value }
              .take(3)
@@ -179,7 +179,7 @@ fun AnalyticsScreen(sales: List<Sale>) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(entry.key, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.invoice_label, entry.key.toString()), fontWeight = FontWeight.SemiBold)
                             }
                             Text(Money.formatMajor(entry.value, maxDecimals = 0), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }

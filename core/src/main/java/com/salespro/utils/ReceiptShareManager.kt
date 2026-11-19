@@ -13,14 +13,15 @@ interface ReceiptShareManager {
 
 class DefaultReceiptShareManager : ReceiptShareManager {
     override fun shareReceiptText(context: Context, customerPhone: String, productName: String, quantity: Int, totalAmount: Double) {
-        val message = """
-            Receipt from RetailPilot
-
-            Item: $productName x $quantity
-            Total Amount: ${com.salespro.settings.Money.formatMajor(totalAmount)}
-
-            Thank you for shopping with us!
-        """.trimIndent()
+        val localized = com.salespro.settings.AppSettings.wrap(context)
+        val message = listOf(
+            localized.getString(com.salespro.core.R.string.receipt_title) + " - RetailPilot",
+            "",
+            localized.getString(com.salespro.core.R.string.receipt_item, productName, quantity),
+            localized.getString(com.salespro.core.R.string.receipt_total, com.salespro.settings.Money.formatMajor(totalAmount)),
+            "",
+            localized.getString(com.salespro.core.R.string.receipt_thanks)
+        ).joinToString("\n")
 
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
@@ -28,7 +29,7 @@ class DefaultReceiptShareManager : ReceiptShareManager {
             type = "text/plain"
         }
 
-        val chooserIntent = Intent.createChooser(sendIntent, "Share Receipt")
+        val chooserIntent = Intent.createChooser(sendIntent, com.salespro.settings.AppSettings.wrap(context).getString(com.salespro.core.R.string.share_receipt))
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         try {

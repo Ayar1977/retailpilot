@@ -23,6 +23,19 @@ android {
     }
 
     signingConfigs {
+        // Fixed signing key so each new build installs over the previous one and the
+        // app's data is kept. Supplied by docker/build.sh from the local keys folder
+        // (never committed). Without it, Android's temporary debug key is used.
+        getByName("debug") {
+            val fixedKeystore = System.getenv("RETAILPILOT_KEYSTORE")
+            if (!fixedKeystore.isNullOrBlank() && file(fixedKeystore).exists()) {
+                storeFile = file(fixedKeystore)
+                storePassword = System.getenv("RETAILPILOT_STORE_PASSWORD")
+                keyAlias = System.getenv("RETAILPILOT_KEY_ALIAS")
+                keyPassword = System.getenv("RETAILPILOT_KEY_PASSWORD")
+            }
+        }
+
         create("release") {
             val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
 
